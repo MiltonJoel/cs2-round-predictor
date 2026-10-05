@@ -1,0 +1,15 @@
+data/
+*.csv
+*.parquet
+*.dem
+*.zip
+models/
+*.pkl
+*.joblib
+*.txt.model
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.cache/

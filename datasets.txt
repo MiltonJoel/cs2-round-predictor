@@ -1,0 +1,10 @@
+import kagglehub
+
+# Download latest version
+path = kagglehub.dataset_download("billpureskillgg/cs2-2023-11-23")
+
+print("Path to dataset files:", path)
+# Download latest version
+path = kagglehub.dataset_download("ektarr/counter-strike-pro-matches")
+# Download latest version
+path = kagglehub.dataset_download("pr4nut/counter-strike-2-detailed-scoreboards-150-maps")
