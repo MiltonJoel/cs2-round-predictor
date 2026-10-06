@@ -149,3 +149,42 @@ python3 oos_eval.py v2 --update                                            # dow
 - **Staleness warning:** it warns if the newest Kaggle match (the only player-stat source) is more than 3 weeks old.
 - **Odds:** OddsPapi is never called by `--update`, to protect the free quota.
 - **Prediction log:** every `predict` appends a row to `data/predictions.csv`, written before the match, so a forward track record builds up that can't be cherry-picked later.
+
+## v3: player Elo, lineup continuity, map comfort, veto simulation (`v3.py`)
+
+What's new:
+- **Player Elo:** a rating per player and per (player, map). A team's strength is its lineup's average, so stand-ins and roster moves shift it right away.
+- **Lineup continuity:** how many of today's 5 played in the team's last 5 maps.
+- **Map comfort:** how often each team played this map recently, map-pool depth, and map 1/2 (picks) vs decider.
+- **Veto simulation:** each team bans its worst remaining map and picks its best (by the model's own per-map probabilities). This gives a series probability before the maps are known, and `predict` works without a map.
+- **No real veto data:** Liquipedia's free wikitext has no pick/ban data (0 of 28,101 matches), so who picked what is inferred.
+
+```
+python3 v3.py eval                                              # ablation + Pinnacle comparison (~4 min)
+python3 v3.py train                                             # -> models/prematch_v3.pkl (v1/v2 kept)
+python3 v3.py predict "Team Vitality" "Team Spirit" 2026-10-07  # series via simulated veto
+python3 v3.py predict "Team Vitality" "Team Spirit" 2026-10-07 Mirage --bo 3 --update
+```
+
+Ablation: trained on everything before 2026-06-29 (Kaggle + Liquipedia), tested on Jul–Oct. Log loss change vs base, with a 95% CI clustered by match:
+
+| feature group | Kaggle Jul–Oct (1,097 maps) | Liquipedia Jul–Oct (2,398 maps) |
+|---|---|---|
+| base (v2 features) | 0.6457 | 0.6678 |
+| + player Elo | +0.0002 [−0.0008, +0.0013] | −0.0003 [−0.0009, +0.0003] |
+| + continuity | −0.0001 [−0.0002, −0.0000] | −0.0000 |
+| + map order/comfort | −0.0004 [−0.0015, +0.0007] | +0.0002 [−0.0005, +0.0009] |
+| all (v3) | 0.6455, −0.0002 [−0.0018, +0.0014] | 0.6677, −0.0000 [−0.0010, +0.0009] |
+
+Against Pinnacle closing on the same 184 series (model minus Pinnacle, log loss; positive means Pinnacle is better):
+
+| | map 1 | series, map-1 shortcut | series, simulated veto |
+|---|---|---|---|
+| base | +0.016 [−0.021, +0.053] | +0.045 [−0.005, +0.094] | +0.040 [−0.006, +0.085] |
+| v3 | +0.014 [−0.023, +0.052] | +0.043 [−0.008, +0.092] | **+0.037** [−0.010, +0.080] |
+
+Verdict:
+- **New features:** they add nothing measurable. Player Elo mostly duplicates team Elo, because Kaggle lineups are stable and most stand-in information arrives after our data does.
+- **Veto simulation:** the only real gain is in how series odds are built. It's about 0.005–0.007 better than assuming every map plays like map 1, and it's honest before the veto.
+- **Pinnacle:** still ahead on series.
+- **Note on training data:** the frozen v1 (Kaggle-only training) does better on this top-tier Pinnacle subset (series 0.627, map 1 0.642) than models trained on Kaggle + Liquipedia. Liquipedia's lower-tier data helps overall but dilutes the player-stat signal at the top tier.
