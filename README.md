@@ -114,3 +114,24 @@ Check before adopting it: with the same features trained only on data before 202
 ```
 python3 oos_eval.py predict "Team Vitality" "Team Spirit" Mirage 2026-10-07
 ```
+
+## Model vs bookmaker (Pinnacle closing odds, Jul–Oct 2026)
+
+`odds.py` fetches CS2 fixtures and Pinnacle price history from OddsPapi. The free plan needs a key in `.oddspapi_key`, which is gitignored, and every response is cached in `data/odds/cache/`. `market_eval.py` compares the **frozen** model (trained through 2026-06-28) with Pinnacle's closing price on the same matches.
+
+- **Closing price:** the last snapshot where both teams are quoted, before the earlier of Kaggle's start time (UTC+3, converted to UTC) and OddsPapi's scheduled start. The bookmaker margin is removed proportionally.
+- **Sample:** 184 Kaggle series matched to an OddsPapi fixture with Pinnacle odds.
+
+| | Map 1 log loss | Map 1 acc | Series log loss | Series acc |
+|---|---|---|---|---|
+| coin flip | 0.693 | – | 0.693 | – |
+| Elo only | 0.653 | 60.3% | 0.640 | 64.1% |
+| **frozen model** | **0.642** | 63.6% | 0.627 | 65.2% |
+| **Pinnacle closing** | 0.647 | 58.7% | **0.604** | 67.4% |
+| model + market blend (leave-one-out) | 0.652 | 60.9% | 0.607 | 68.5% |
+
+How to read it:
+- **Series winner, the market's main product:** Pinnacle is better. Model minus market log loss is +0.024, 95% CI [−0.012, +0.060]. Blending the model in doesn't improve on the market.
+- **Map 1:** tied (−0.005, CI [−0.033, +0.022]). Pinnacle's map-1 line is probably mostly set before the veto, while our model already knows which map is being played.
+- **Where the edge comes from:** the model and the market pick the same favourite 80% of the time. Most of the predictable part is shared.
+- **Bookmaker accuracy:** even Pinnacle is right only ~67% on series and ~77–79% on its 70%+ favourites. A claimed 83% across all matches would beat the sharpest market by a wide margin.
