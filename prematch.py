@@ -23,11 +23,11 @@ K, K_MAP, FORM_N, PLAYER_N = 32, 32, 10, 20
 STATS = ["kills", "deaths", "adr", "kast"]
 
 
-def load():
-    tiers = pd.concat([pd.read_csv(RAW / f"cs2_tier{t}_games.csv", usecols=["game_id", "is_total"]).assign(tier=t)
+def load(raw=RAW):
+    tiers = pd.concat([pd.read_csv(raw / f"cs2_tier{t}_games.csv", usecols=["game_id", "is_total"]).assign(tier=t)
                        for t in (1, 2, 3)])
     tiers = tiers[~tiers.is_total].drop_duplicates("game_id")[["game_id", "tier"]]
-    d = pd.read_csv(RAW / "cs2_all_tiers_games.csv", low_memory=False)
+    d = pd.read_csv(raw / "cs2_all_tiers_games.csv", low_memory=False)
     d = d[~d.is_total].dropna(subset=["map_name", "score1_game", "score2_game"])
     # team1_win is the SERIES winner repeated on every map row; the map winner comes from the score.
     d = d[(d[["score1_game", "score2_game"]].max(axis=1) >= 13) & (d.score1_game != d.score2_game)]
@@ -75,8 +75,8 @@ class State:
         }
 
     def features(self, a, b, m, when, la=None, lb=None):
-        la = la if la is not None else self.lineup.get(a, [])
-        lb = lb if lb is not None else self.lineup.get(b, [])
+        la = la or self.lineup.get(a, [])  # no lineup in the row (e.g. Liquipedia) -> last known one
+        lb = lb or self.lineup.get(b, [])
         sa, sb = self.side(a, m, la, when), self.side(b, m, lb, when)
         f = {k: sa[k] - sb[k] for k in sa}
         h = self.h2h[tuple(sorted((a, b)))]
@@ -104,11 +104,14 @@ class State:
                 s = [getattr(r, f"{team}_player{i}_{x}") for x in STATS]
                 if not any(pd.isna(s)):
                     self.player[p].append(s)
-        self.lineup[a], self.lineup[b] = la, lb
+        if la:
+            self.lineup[a] = la
+        if lb:
+            self.lineup[b] = lb
 
 
 def lineups(r):
-    get = lambda t: [p for p in (getattr(r, f"{t}_player{i}_id") for i in range(1, 6)) if not pd.isna(p)]
+    get = lambda t: [p for p in (getattr(r, f"{t}_player{i}_id", None) for i in range(1, 6)) if not pd.isna(p)]
     return get("team1"), get("team2")
 
 

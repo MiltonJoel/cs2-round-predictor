@@ -73,3 +73,44 @@ Notes:
 - Isotonic calibration overfit the validation set and raised log loss (≈0.675), so Platt scaling replaced it. Its fitted slope is about 1, meaning logreg was already calibrated.
 - Adding raw map Elo on top of Elo overweights it. In the learned models it helps only a little.
 - The team listed first wins 56.9% of test maps. The model predicts 54.5% for that slot without seeing slot order, so the listing order (likely seeding) carries a bit of extra information that we deliberately don't use.
+
+## Out-of-sample and cross-source check (2026-10-06)
+
+Question: does the backtest hold on matches the model never saw, and on data from a different source?
+The model in `models/prematch.pkl` was **not retrained** for this check. Its weights come from Kaggle data through 2026-06-28. Elo, form and h2h still update map by map as new results arrive (walk-forward).
+
+- **C, same source, later dates:** the refreshed Kaggle dataset (v5, `data/kaggle_v5/`) adds 1,097 maps from 2026-06-29 to 2026-10-03.
+- **B, independent source:** Liquipedia via its MediaWiki API (`liquipedia.py`, cached in `data/liquipedia/`), 33k maps for 2026, all tiers. Team codes are resolved to names with `{{TeamBracket}}` and matched to Kaggle names. Liquipedia has no player stats, so player features stay at their last Kaggle values. Only maps where both teams are known to the model are scored.
+- HLTV was not used: its pages sit behind a Cloudflare "verify you are human" check.
+
+Log loss with a 95% bootstrap CI (resampled by match):
+
+| test set | n | coin flip | Elo only | frozen logreg | AUC | acc |
+|---|---|---|---|---|---|---|
+| Kaggle 2026H1 (original test) | 1861 | 0.693 | 0.669 | **0.657** [0.643, 0.670] | 0.633 | 0.601 |
+| C: Kaggle Jul–Oct 2026 | 1097 | 0.693 | 0.682 | **0.658** [0.642, 0.676] | 0.654 | 0.621 |
+| B: Liquipedia Jul–Oct 2026 | 2261 | 0.693 | 0.689 | **0.675** [0.666, 0.685] | 0.603 | 0.572 |
+| B, S-tier only | 341 | | | 0.650 | | 0.619 |
+| B, both teams with 20+ training maps | 727 | | | 0.660 | | 0.614 |
+
+The model stays calibrated on both new sets. Predictions in the 0.5–0.8 range land within ~0.01 of the actual win rate (full tables in `data/oos_report.txt`).
+
+Source-bias checks (Jan–Jun 2026 overlap):
+- **Agreement:** where both sources have the same map, they agree on the winner 99.6% of the time and on the score 98.6% (1,746 maps). The few mismatches are mostly maps swapped within one series.
+- **Coverage:** Kaggle covers 89% of Liquipedia's S-tier maps and 77% of A-tier, but only ~10% of B/C-tier. Kaggle is a top-tier sample.
+- **Listed-first:** the team listed first wins 55–56% of maps on Liquipedia too, vs 57% on Kaggle. That's real seeding information, not a Kaggle artifact, and the model deliberately ignores it.
+
+**Verdict:**
+- **Same source:** the result holds out of sample. Log loss on unseen Jul–Oct maps (0.658) is the same as the original test (0.657).
+- **Across sources:** it also beats Elo and coin flip on Liquipedia's independent results. The margin is smaller overall (0.675) because that sample is mostly lower-tier teams with thin history. On top-tier and well-covered teams it matches the Kaggle numbers (0.650–0.660).
+- **What it is:** a modest edge (about 60% accuracy, AUC ~0.63), not a strong predictor.
+
+### v2 model (all data)
+
+`python3 oos_eval.py v2` retrains logreg on Kaggle v5 plus the 30.6k Liquipedia maps Kaggle doesn't have, and saves it as `models/prematch_v2.pkl`. The original is kept.
+
+Check before adopting it: with the same features trained only on data before 2026-06-29, adding Liquipedia improved log loss on the Kaggle Jul–Oct maps from 0.659 to 0.646 (Elo alone: 0.682 → 0.663). The extra matches sharpen the ratings.
+
+```
+python3 oos_eval.py predict "Team Vitality" "Team Spirit" Mirage 2026-10-07
+```
