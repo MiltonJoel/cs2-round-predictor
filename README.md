@@ -188,3 +188,58 @@ Verdict:
 - **Veto simulation:** the only real gain is in how series odds are built. It's about 0.005–0.007 better than assuming every map plays like map 1, and it's honest before the veto.
 - **Pinnacle:** still ahead on series.
 - **Note on training data:** the frozen v1 (Kaggle-only training) does better on this top-tier Pinnacle subset (series 0.627, map 1 0.642) than models trained on Kaggle + Liquipedia. Liquipedia's lower-tier data helps overall but dilutes the player-stat signal at the top tier.
+
+### v3 trained on Kaggle only (`python3 v3.py eval --kaggle-only`)
+
+With top-tier data only, v3's features still add nothing. Kaggle Jul–Oct: base 0.6587, all v3 features +0.0013 [−0.0022, +0.0049]. Against Pinnacle, the Kaggle-only base is the best variant we have: series +0.021 [−0.011, +0.055], map 1 −0.006 (a tie).
+
+## v4: expected rosters from Liquipedia transfers (`rosters.py`, `v4.py`)
+
+`rosters.py` reads Liquipedia's "Player Transfers/YYYY/Month" pages (2024 → today, 14,241 player moves). It skips staff roles and treats inactive/benched players as not active. 80% of Kaggle's players appear in at least one transfer.
+
+`v4.py` starts from each team's last lineup and applies every transfer dated before the match day. Its features:
+- player Elo on that **expected roster**
+- players changed in the last 30/90 days
+- days since the last change
+- newcomers (fewer than 5 maps with the team)
+
+`predict` defaults to the current Liquipedia roster, and `--players a,b,c,d,e` overrides team A's five.
+
+```
+python3 rosters.py                                   # fetch/refresh transfers (cached)
+python3 v4.py eval [--kaggle-only]
+python3 v4.py train                                  # -> models/prematch_v4.pkl (Kaggle-only history, best top-tier variant)
+python3 v4.py predict "Team Vitality" "Team Spirit" 2026-10-07 Mirage --players "zywoo,apex,flamez,mezii,kyousuke"
+python3 v4.py predict ... --update                   # refresh Kaggle, Liquipedia results and transfers first
+```
+
+Log loss change vs **using the team's last lineup**, on unseen Jul–Oct maps (95% CI by match; negative = better). Training data is Kaggle + Liquipedia:
+
+| lineup / features | Kaggle all (1,097) | Kaggle after a roster change (614) | Liquipedia all (2,398) | Liquipedia after a change (1,480) |
+|---|---|---|---|---|
+| actual lineup (known only at match time) | −0.0016 [−0.0034, −0.0000] | −0.0014 | −0.0006 | −0.0004 |
+| expected roster | −0.0014 [−0.0034, +0.0004] | −0.0011 | −0.0006 | −0.0003 |
+| + player Elo + change features | −0.0029 [−0.0058, +0.0002] | −0.0035 | −0.0019 | −0.0027 |
+| all v3 + change features | **−0.0034** [−0.0062, −0.0003] | −0.0044 [−0.0093, +0.0004] | −0.0016 | −0.0034 [−0.0071, +0.0004] |
+
+Kaggle-only training, compared with Pinnacle (184 series):
+- **Map 1:** −0.010 [−0.035, +0.015], a tie.
+- **Series:** +0.021 [−0.009, +0.052]. Pinnacle is still ahead.
+
+Verdict:
+- **Roster info is real but small.** Knowing the lineup in advance is worth about 0.002–0.003 log loss. Transfer-based expected rosters recover most of that, and the roster-change features add a little more, most right after changes.
+- **Not enough to catch Pinnacle**, which very likely prices stand-ins and last-minute news we don't see.
+- **Models can disagree a lot on single matchups:** v4 (Kaggle-only history) gives Vitality 44% vs Spirit, v3 (with Liquipedia) 62%.
+
+## HLTV pages you save yourself (`hltv_import.py`)
+
+Open a match page on hltv.org in your normal browser, save it (Ctrl+S, "Webpage, complete" or "HTML only") into `data/hltv_saved/`, then run:
+
+```
+python3 hltv_import.py      # offline: parses the saved .html files -> data/hltv_saved/maps.csv
+```
+
+- **What it reads:** date, event, teams, best-of, each map's score, the veto (who picked each map, the decider) and per-map player K/D/ADR/KAST when the saved page has them.
+- **Team names** are mapped onto the Kaggle names.
+- **No network:** it never contacts HLTV.
+- **Not yet checked on real pages:** it's tested only on a synthetic page, so the CSS selectors may need small tweaks once a real saved page is available.
