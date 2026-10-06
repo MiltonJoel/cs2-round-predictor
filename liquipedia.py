@@ -10,13 +10,14 @@ API = "https://liquipedia.net/counterstrike/api.php"
 UA = "CounterPredictor/0.1 (research project; https://github.com/MiltonJoel)"
 CACHE = Path(__file__).parent / "data/liquipedia/cache"
 _last = [0.0]
+FRESH = False  # True: ignore cached responses (still rewrites the cache) -- used by update.py for recent months
 
 
 def api(**params):
     params = {"format": "json", "formatversion": 2, **params}
     url = API + "?" + urllib.parse.urlencode(sorted(params.items()))
     f = CACHE / (hashlib.sha1(url.encode()).hexdigest() + ".json")
-    if f.exists():
+    if f.exists() and not FRESH:
         return json.loads(f.read_text())
     time.sleep(max(0, 2.5 - (time.time() - _last[0])))
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Encoding": "gzip"})

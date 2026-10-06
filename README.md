@@ -135,3 +135,17 @@ How to read it:
 - **Map 1:** tied (−0.005, CI [−0.033, +0.022]). Pinnacle's map-1 line is probably mostly set before the veto, while our model already knows which map is being played.
 - **Where the edge comes from:** the model and the market pick the same favourite 80% of the time. Most of the predictable part is shared.
 - **Bookmaker accuracy:** even Pinnacle is right only ~67% on series and ~77–79% on its 70%+ favourites. A claimed 83% across all matches would beat the sharpest market by a wide margin.
+
+## Keeping data fresh
+
+```
+python3 update.py                                                          # just download
+python3 oos_eval.py predict "Team Vitality" "Team Spirit" Mirage 2026-10-07 --update   # download, then predict
+python3 oos_eval.py v2 --update                                            # download, then retrain v2
+```
+
+- **Kaggle:** `--update` re-pulls the Kaggle dataset with kagglehub and copies it only when the version changes. Old versions stay in kagglehub's cache.
+- **Liquipedia:** it re-fetches Liquipedia tournaments dated in the current and previous month, bypassing the cache, and merges them without dropping older rows.
+- **Staleness warning:** it warns if the newest Kaggle match (the only player-stat source) is more than 3 weeks old.
+- **Odds:** OddsPapi is never called by `--update`, to protect the free quota.
+- **Prediction log:** every `predict` appends a row to `data/predictions.csv`, written before the match, so a forward track record builds up that can't be cherry-picked later.

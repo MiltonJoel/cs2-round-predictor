@@ -4,6 +4,7 @@
     python3 oos_eval.py     # walk-forward scoring on (C) Kaggle refresh and (B) Liquipedia, source-bias checks
     python3 oos_eval.py v2  # then retrain on everything -> models/prematch_v2.pkl (original kept)
     python3 oos_eval.py predict "Team Vitality" "Team Spirit" Mirage 2026-10-07   # v2 prediction
+    add --update to any command to download new Kaggle/Liquipedia data first (see update.py)
 """
 import pickle, re, sys
 from pathlib import Path
@@ -197,10 +198,20 @@ def predict_v2(team_a, team_b, map_name, date, tier=1, best_of=3):
     a, b = known[team_a.lower()], known[team_b.lower()]
     X = pd.DataFrame([st.features(a, b, map_name, date)]).assign(tier=tier, bestOf=best_of)[P.DIFF + P.CTX]
     p = P.sym_proba(pickle.load(open(V2, "rb"))["logreg"], X.fillna(0))[0]
+    # Append-only forward log: written before the match, scored later against the real result.
+    log = ROOT / "data/predictions.csv"
+    row = pd.DataFrame([{"logged_at": pd.Timestamp.now().isoformat(timespec="seconds"), "match_date": date.date(),
+                         "team_a": a, "team_b": b, "map": map_name, "p_a": round(float(p), 4), "model": V2.name,
+                         "data_last": hist.datetime.max()}])
+    row.to_csv(log, mode="a", header=not log.exists(), index=False)
     return {team_a: float(p), team_b: float(1 - p)}
 
 
 if __name__ == "__main__":
+    if "--update" in sys.argv:
+        sys.argv.remove("--update")
+        import update
+        update.run()
     if sys.argv[1:2] == ["v2"]:
         v2()
     elif sys.argv[1:2] == ["predict"]:
