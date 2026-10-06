@@ -243,3 +243,21 @@ python3 hltv_import.py      # offline: parses the saved .html files -> data/hltv
 - **Team names** are mapped onto the Kaggle names.
 - **No network:** it never contacts HLTV.
 - **Not yet checked on real pages:** it's tested only on a synthetic page, so the CSS selectors may need small tweaks once a real saved page is available.
+
+## Demos (`demos.py`)
+
+Put `.dem` files you downloaded in `data/hltv_saved/` (or pass a folder), then run `python3 demos.py`. It parses them offline with demoparser2 and writes:
+- `data/demos/rounds.csv`: one row per round, with CT/T team, winner, end reason, each side's equipment value and money at freeze-end, and a `complete` flag for the map.
+- `data/demos/players.csv`: per player per map, kills, deaths, assists, ADR (damage capped at the victim's remaining HP) and KAST (kill, assist, survived or traded within 5 s).
+
+How it handles messy files:
+- **Zero-padded downloads:** demos that arrive zero-padded, with the real demo further inside the file, are recovered into `data/demos/recovered/`. The originals are left untouched.
+- **Round restores:** technical-pause round restores, which kill all 10 players with "world" on one tick, are not counted as deaths.
+
+Checked against Kaggle on 60 player-maps:
+- kills match 100%
+- deaths match 98%
+- ADR is off by 1.2 on average
+- KAST is off by 2.6 on average
+
+Final scores match Kaggle and Liquipedia on all 7 complete maps.
