@@ -5,7 +5,8 @@ Lineup policies compared (same features, same splits):
   last     - the team's previous lineup (no transfer info)
   expected - previous lineup updated with every transfer dated before the match day, plus roster-change features
     python3 v4.py eval [--kaggle-only]
-    python3 v4.py predict "Team Vitality" "Team Spirit" 2026-10-07 [MAP] [--players a,b,c,d,e] [--bo 3]
+    python3 v4.py predict "Team Vitality" "Team Spirit" 2026-10-07 [MAP] [--players a,b,c,d,e] [--players-b ...] [--bo 3]
+    (rosters default to the lineup announced on Liquipedia for that tournament, see lineup.py)
 """
 import pickle, sys
 from collections import defaultdict
@@ -195,8 +196,9 @@ def evaluate(kaggle_only=False):
             print(f"   {k:48s} {v3.ll(yy, t[k].values).mean():.4f}  minus Pinnacle {d:+.4f} [{lo:+.4f}, {hi:+.4f}]")
 
 
-def predict(team_a, team_b, date, map_name=None, players=None, bo=3):
-    """Uses Liquipedia transfers up to `date` for both rosters; players=(list for A) overrides team A's 5."""
+def predict(team_a, team_b, date, map_name=None, players=None, bo=3, players_b=None):
+    """Rosters, in priority order: --players / --players-b given by hand > the lineup announced on Liquipedia for the
+    tournament running that day (lineup.py: stand-ins included) > last lineup updated with transfers up to `date`."""
     hist, date = P.load(O.V5), pd.Timestamp(date)  # ponytail: Kaggle-only history, the best top-tier variant
     moves = transfers(pd.concat([hist.team1, hist.team2]).unique())
     ids = player_ids(hist)
@@ -205,8 +207,25 @@ def predict(team_a, team_b, date, map_name=None, players=None, bo=3):
     m = pickle.load(open(V4, "rb"))
     known = {t.lower(): t for t in pd.concat([hist.team1, hist.team2])}
     a, b = known[team_a.lower()], known[team_b.lower()]
-    la = [st.pid(p.strip().lower()) for p in players] if players else st.expected(a)
-    lb = st.expected(b)
+    try:
+        import lineup
+        ann = lineup.announced(team_a, team_b, date)
+    except Exception as e:  # no network / page format changed: fall back to transfers
+        print(f"lineup: Liquipedia lookup failed ({e}); using transfer-based rosters")
+        ann = None
+    source = {}
+    def roster(team, name, manual):
+        if manual:
+            source[name] = "manual (--players)"
+            return [st.pid(p.strip().lower()) for p in manual]
+        if ann and len(ann[name]["active"]) >= 5:
+            info = ann[name]
+            source[name] = {"from": "Liquipedia " + ann["tournament"], "subs": info["subs"],
+                            "left": info["former"], "notes": info["notes"]}
+            return [st.pid(p.lower()) for p in info["active"][:5]]
+        source[name] = "last lineup + transfers"
+        return st.expected(team)
+    la, lb = roster(a, team_a, players), roster(b, team_b, players_b)
     cf = {t: st.change_feats(t, date, lu) for t, lu in ((a, la), (b, lb))}
     def p(mp):
         f = st.features3(a, b, mp, date, la, lb, 1, bo)
@@ -214,7 +233,7 @@ def predict(team_a, team_b, date, map_name=None, players=None, bo=3):
         return float(v3.proba(m["logreg"], pd.DataFrame([f]).assign(tier=1, bestOf=bo), m["diff"], m["ctx"])[0])
     inv = {v: k for k, v in ids.items()}  # id -> nickname
     names = lambda lu: [inv.get(x, str(x).removeprefix("n:")) for x in lu]
-    out = {"rosters": {team_a: names(la), team_b: names(lb)}}
+    out = {"rosters": {team_a: names(la), team_b: names(lb)}, "roster source": source}
     if map_name:
         q = p(map_name)
         out.update({"map": map_name, team_a: q, team_b: 1 - q})
@@ -246,7 +265,11 @@ if __name__ == "__main__":
         rosters.collect(rosters.pages()[-2:])  # refresh the last two months of transfers
         rosters.L.FRESH = False
         rosters.collect().to_csv(rosters.OUT, index=False)
-    players, bo = None, 3
+    players, players_b, bo = None, None, 3
+    if "--players-b" in args:
+        i = args.index("--players-b")
+        players_b = args[i + 1].split(",")
+        del args[i:i + 2]
     if "--players" in args:
         i = args.index("--players")
         players = args[i + 1].split(",")
@@ -260,4 +283,4 @@ if __name__ == "__main__":
     elif args[0] == "train":
         train()
     else:
-        print(predict(*args[1:5], players=players, bo=bo))
+        print(predict(*args[1:5], players=players, bo=bo, players_b=players_b))

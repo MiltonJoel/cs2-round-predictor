@@ -315,3 +315,28 @@ Local held-out check (113 demo maps, 5 folds by series, 3,000 sims per map):
 - **What it adds:** full scoreline and round-by-round odds, not better win probabilities.
 
 Cloud run: the `cloud-data` branch holds everything under `data/` that the evaluation reads. That's the demo tables, the Kaggle CSVs, Liquipedia maps and transfers, and the frozen v1 model; no .dem files and no API caches.
+
+## Announced lineups (`lineup.py`)
+
+Before a match, `lineup.py` finds the tournament running that day whose Liquipedia participants list includes both teams. It reads each team's announced players from `{{TeamParticipants}}`, using the same cache and request pauses as `liquipedia.py`:
+- **active five:** stand-ins are listed once announced
+- **subs:** `status=sub` / `role=sub`
+- **players who left:** `status=former`
+- **notes:** e.g. "September 27th – bobz stands in for arT who misses the event due to health issues"
+
+`v4.py predict` now picks rosters in this order:
+1. `--players` (team A) or `--players-b` (team B) given by hand
+2. the lineup announced on Liquipedia
+3. last lineup updated with transfers
+
+The output shows where each roster came from.
+
+```
+python3 lineup.py "Legacy" "PARIVISION" 2026-10-05
+python3 v4.py predict "Legacy" "PARIVISION" 2026-10-05 Mirage                                   # Liquipedia: bobz for arT
+python3 v4.py predict "Legacy" "PARIVISION" 2026-10-05 Mirage --players "latto,dumau,n1ssim,try,art"  # manual wins
+```
+
+Test case: Legacy at ESL Pro League S24, where bobz stands in for arT.
+- **Lineups read:** Legacy's five (latto, dumau, n1ssim, try, bobz) and PARIVISION's (HObbit signed, slaxejezzz benched) both come from the tournament page.
+- **On Mirage:** Legacy gets 64.5% with bobz and 60.1% with arT forced by hand. bobz's recent stats rate slightly higher, so the model doesn't penalise the stand-in.
