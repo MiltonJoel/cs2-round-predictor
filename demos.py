@@ -144,6 +144,13 @@ def main(folder):
             rs.append(r), ps.append(pl)
         except Exception as e:
             print(f"[{n}/{len(files)}] {label}: failed ({e})", flush=True)
+    seen = {str(f.relative_to(folder)).replace("/", "__") + ".pkl" for f in files}
+    kept = [p for p in sorted(cache.glob("*.pkl")) if p.name not in seen]  # demos deleted after parsing stay in
+    for p in kept:
+        r, pl = pd.read_pickle(p)
+        rs.append(r), ps.append(pl)
+    if kept:
+        print(f"{len(kept)} cached maps whose .dem is gone kept from {cache}")
     R = pd.concat(rs, ignore_index=True)
     R["series"] = R.file.map(lambda x: x.split("/")[0] if "/" in x else "")
     R.drop(columns=[c for c in R.columns if c.startswith("score_")]).to_csv(OUT / "rounds.csv", index=False)
