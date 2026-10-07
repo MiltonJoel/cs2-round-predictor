@@ -287,3 +287,31 @@ The log-ratio of CT to T equipment is by far the strongest input. CT round win r
 | much richer | 78.6% |
 
 CT-sided maps in this sample: Nuke 59%, Mirage 56%, Dust2 56%. Ancient and Inferno are about 49%.
+
+## Map simulator (`sim.py`, PLAN.md step 4)
+
+How it works:
+- **Round model:** a logistic model of P(CT wins round) from the log CT/T equipment ratio, pistol and overtime flags, map, and the pre-match strength of the CT team. Strength is the logit of the frozen v1 map probability.
+- **Economy:** buys are fitted from the demos (median equipment per resource level, per side). Next-round resources come from a linear fit on the demos, plus the CS2 loss-bonus ladder.
+- **Match rules:** pistols at rounds 1 and 13, side switch after 12, MR3 overtime with $12,500.
+- **Strength coefficient:** scaled ("anchored") so the simulated P(map win) reproduces v1. Fitted only from rounds, it under-weights team strength.
+- **Map-to-map wobble:** each simulated map draws its own strength (σ fitted). Without it the simulator gives too many close scorelines.
+
+```
+python3 sim.py "Team Vitality" "Team Spirit" Mirage 2026-10-07 --ct A --sims 10000
+python3 sim.py eval --sims 10000 --out results/ [--data-dir DIR]   # held-out series; writes summary/calibration/scorelines
+```
+
+Outputs:
+- P(map win)
+- top scorelines
+- expected first-half score
+- P(win) for each pistol round
+- P(win) per round number
+
+Local held-out check (113 demo maps, 5 folds by series, 3,000 sims per map):
+- **P(map win):** simulator log loss 0.691 vs frozen v1 0.687. That's inside the noise at this sample size; the simulator mostly passes v1's opinion through.
+- **Scorelines:** the simulated loser averages 8.12 rounds vs 8.03 on real demo maps and 8.03 across 3,008 Kaggle 2026 maps.
+- **What it adds:** full scoreline and round-by-round odds, not better win probabilities.
+
+Cloud run: the `cloud-data` branch holds everything under `data/` that the evaluation reads. That's the demo tables, the Kaggle CSVs, Liquipedia maps and transfers, and the frozen v1 model; no .dem files and no API caches.
