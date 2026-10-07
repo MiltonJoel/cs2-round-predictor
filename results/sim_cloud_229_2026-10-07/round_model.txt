@@ -1,0 +1,44 @@
+229 maps, 102 series, 4937 rounds, CT won 53.9%
+                   log_loss   brier     auc     acc
+model                                              
+CT rate per map      0.6902  0.2485  0.5153  0.5374
+logistic             0.5979  0.2082  0.7166  0.6443
+gradient boosting    0.6091  0.2126  0.7026  0.6350
+
+logistic coefficients (standardized, + favours CT):
+map_Inferno   -0.054
+map_Ancient   -0.038
+overtime      -0.030
+money_diff    -0.015
+eq_diff       -0.010
+map_Anubis    -0.008
+map_Cache      0.005
+score_diff     0.005
+map_Dust2      0.006
+map_Mirage     0.027
+ct_won_prev    0.037
+map_Nuke       0.056
+ct_eq          0.067
+t_eq           0.085
+pistol         0.097
+eq_ratio       1.150
+
+CT win rate by equipment gap (non-pistol):
+                size   mean
+eq_diff                    
+CT much poorer   585  0.168
+CT poorer        442  0.380
+even            1105  0.488
+CT richer       1284  0.599
+CT much richer  1083  0.807
+
+CT win rate by map:
+         size   mean
+map                 
+Ancient   797  0.498
+Anubis    338  0.521
+Cache     827  0.543
+Dust2     744  0.550
+Inferno   570  0.493
+Mirage   1067  0.560
+Nuke      594  0.593
