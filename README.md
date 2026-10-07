@@ -261,3 +261,29 @@ Checked against Kaggle on 60 player-maps:
 - KAST is off by 2.6 on average
 
 Final scores match Kaggle and Liquipedia on all 7 complete maps.
+
+### Round model from demos (`round_model.py`)
+
+`demos.py` now walks subfolders (one folder per series), caches each parsed demo in `data/demos/parsed/` so reruns only parse new files, and fixes a bug where a round was dropped when the demo started recording after the buy phase. `python3 demos.py validate` compares final scores with Liquipedia.
+
+On 122 demos (113 complete maps, 51 series, 2,404 rounds with economy):
+- **Score check against Liquipedia:** 86 maps match, 6 differ (mostly by one round), and 21 aren't on Liquipedia.
+- **Round winner model:** cross-validated so a whole series is held out each time, it predicts the round winner from the economy at freeze-end, side, score, pistol flag and map. These are in-round inputs, not pre-match.
+
+| model | log loss | Brier | AUC | acc |
+|---|---|---|---|---|
+| CT win rate per map | 0.694 | 0.250 | 0.50 | 51.7% |
+| logistic | **0.610** | 0.213 | 0.70 | 62.4% |
+| gradient boosting | 0.624 | 0.219 | 0.69 | 62.2% |
+
+The log-ratio of CT to T equipment is by far the strongest input. CT round win rate by equipment gap (non-pistol rounds):
+
+| CT equipment vs T | CT round win rate |
+|---|---|
+| much poorer | 16.5% |
+| poorer | 40.8% |
+| even | 48.7% |
+| richer | 59.5% |
+| much richer | 78.6% |
+
+CT-sided maps in this sample: Nuke 59%, Mirage 56%, Dust2 56%. Ancient and Inferno are about 49%.

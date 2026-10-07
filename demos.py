@@ -15,38 +15,43 @@ ROOT = Path(__file__).parent
 OUT = ROOT / "data/demos"
 
 
-def parse(path):
+def parse(path, label=None):
+    label = label or path.name
     p = DemoParser(str(path))
     m = p.parse_header()["map_name"].replace("de_", "").capitalize()
     ends = p.parse_event("round_end")
-    starts = p.parse_event("round_freeze_end")
-    ticks = p.parse_ticks(["team_clan_name", "team_num", "current_equip_value", "balance", "name"],
-                          ticks=list(starts.tick))
+    ends = ends[ends.winner.isin(["CT", "T"])].sort_values("tick")
+    if "round" in ends:  # a restored round (technical pause) ends twice: keep the last one
+        ends = ends.drop_duplicates("round", keep="last")
+    ends = ends.reset_index(drop=True)
+    st = np.sort(p.parse_event("round_freeze_end").tick.values)
+    # Economy at freeze-end (after buys); team names at the round-end tick (always present).
+    need = sorted(set(st) | set(ends.tick - 1))
+    ticks = p.parse_ticks(["team_clan_name", "team_num", "current_equip_value", "balance"], ticks=need)
     ticks = ticks[ticks.team_num.isin([2, 3])]
-    # pair each round end with the freeze-end just before it
-    ends = ends[ends.winner.isin(["CT", "T"])].sort_values("tick").reset_index(drop=True)
-    st = np.sort(starts.tick.values)
-    rows = []
+    rows, prev_end = [], 0
     for i, e in ends.iterrows():
-        prev = st[st < e.tick]
-        if not len(prev):
-            continue
-        t = ticks[ticks.tick == prev[-1]]
-        side = {n: t[t.team_num == n] for n in (2, 3)}  # 2 = T, 3 = CT
-        name = lambda n: side[n].team_clan_name.mode().iat[0] if len(side[n]) else ""
-        rows.append({"file": path.name, "map": m, "round": i + 1, "ct_team": name(3), "t_team": name(2),
-                     "winner_side": e.winner, "winner": name(3) if e.winner == "CT" else name(2), "reason": e.reason,
-                     "ct_equip": side[3].current_equip_value.sum(), "t_equip": side[2].current_equip_value.sum(),
-                     "ct_money": side[3].balance.sum(), "t_money": side[2].balance.sum(), "end_tick": e.tick,
-                     "start_tick": prev[-1]})
-    r = pd.DataFrame(rows).drop_duplicates("start_tick", keep="last").reset_index(drop=True)
-    r["round"] = range(1, len(r) + 1)
+        fz = st[(st > prev_end) & (st < e.tick)]  # a freeze-end inside this round; missing if recording began late
+        at_end = ticks[ticks.tick == e.tick - 1]
+        name = lambda n: at_end[at_end.team_num == n].team_clan_name.mode().iat[0] if (at_end.team_num == n).any() else ""
+        row = {"file": label, "map": m, "round": i + 1, "ct_team": name(3), "t_team": name(2),
+               "winner_side": e.winner, "winner": name(3) if e.winner == "CT" else name(2), "reason": e.reason,
+               "ct_equip": np.nan, "t_equip": np.nan, "ct_money": np.nan, "t_money": np.nan,
+               "end_tick": e.tick, "start_tick": fz[-1] if len(fz) else prev_end + 1}
+        if len(fz):
+            t = ticks[ticks.tick == fz[-1]]
+            for side, n in (("ct", 3), ("t", 2)):
+                row[side + "_equip"] = t[t.team_num == n].current_equip_value.sum()
+                row[side + "_money"] = t[t.team_num == n].balance.sum()
+        rows.append(row)
+        prev_end = e.tick
+    r = pd.DataFrame(rows)
     teams = sorted(set(r.ct_team) | set(r.t_team))
     for tm in teams:
         r[f"score_{tm}"] = (r.winner == tm).cumsum()
     final = sorted(r.iloc[-1][[f"score_{tm}" for tm in teams]], reverse=True)
     r["complete"] = final[0] >= 13 and final[0] - final[1] >= 2  # ponytail: regulation/OT win condition
-    return r, players(p, r, path.name, m)
+    return r, players(p, r, label, m)
 
 
 def players(p, r, fname, m):
@@ -100,7 +105,7 @@ def players(p, r, fname, m):
                          for n, t in team_of.items()])
 
 
-def recover(f):
+def recover(f, label):
     """Some downloads arrive zero-padded with the real demo further in; copy that part out (original untouched)."""
     with open(f, "rb") as fh:
         if fh.read(7) == b"PBDEMS2":
@@ -109,7 +114,7 @@ def recover(f):
     i = b.find(b"PBDEMS2")
     if i < 0:
         raise ValueError("no CS2 demo inside (no PBDEMS2 header)")
-    out = OUT / "recovered" / f.name
+    out = OUT / "recovered" / label.replace("/", "__")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(b[i:])
     print(f"{f.name}: demo starts at byte {i:,} (file was zero-padded), recovered {len(b) - i:,} bytes")
@@ -117,23 +122,64 @@ def recover(f):
 
 
 def main(folder):
+    """Parses every .dem under `folder` (subfolders = one series each). Results are cached per demo in
+    data/demos/parsed/, so adding new demos and rerunning only parses the new ones."""
+    folder = Path(folder)
+    cache = OUT / "parsed"
+    cache.mkdir(parents=True, exist_ok=True)
     rs, ps = [], []
-    for f in sorted(Path(folder).glob("*.dem")):
+    files = sorted(folder.rglob("*.dem"))
+    for n, f in enumerate(files, 1):
+        label = str(f.relative_to(folder))
+        hit = cache / (label.replace("/", "__") + ".pkl")
         try:
-            f = recover(f)
-            r, pl = parse(f)
+            if hit.exists():
+                r, pl = pd.read_pickle(hit)
+            else:
+                r, pl = parse(recover(f, label), label)
+                pd.to_pickle((r, pl), hit)
+                last = r.iloc[-1]
+                score = " ".join(f"{c[6:]} {last[c]}" for c in r.columns if c.startswith("score_"))
+                print(f"[{n}/{len(files)}] {label}: {r['map'].iat[0]}, {len(r)} rounds, {score}", flush=True)
             rs.append(r), ps.append(pl)
-            last = r.iloc[-1]
-            score = " ".join(f"{c[6:]} {last[c]}" for c in r.columns if c.startswith("score_"))
-            print(f"{f.name}: {r['map'].iat[0]}, {len(r)} rounds, {score}")
         except Exception as e:
-            print(f"{f.name}: failed ({e})")
-    OUT.mkdir(parents=True, exist_ok=True)
+            print(f"[{n}/{len(files)}] {label}: failed ({e})", flush=True)
     R = pd.concat(rs, ignore_index=True)
+    R["series"] = R.file.map(lambda x: x.split("/")[0] if "/" in x else "")
     R.drop(columns=[c for c in R.columns if c.startswith("score_")]).to_csv(OUT / "rounds.csv", index=False)
     pd.concat(ps, ignore_index=True).to_csv(OUT / "players.csv", index=False)
-    print("->", OUT / "rounds.csv", OUT / "players.csv")
+    print(f"{len(files)} demos, {R.file.nunique()} parsed, {R[R.complete].file.nunique()} complete maps, "
+          f"{len(R)} rounds -> {OUT / 'rounds.csv'}")
+
+
+def validate():
+    """Compare each complete demo's final score with Liquipedia (same teams + map, within the last 120 days)."""
+    from oos_eval import key
+    r = pd.read_csv(OUT / "rounds.csv")
+    lp = pd.read_csv(ROOT / "data/liquipedia/maps_2026.csv", parse_dates=["datetime"])
+    lp = lp[lp.datetime >= lp.datetime.max() - pd.Timedelta(days=120)]
+    idx = {}
+    for x in lp.itertuples():
+        idx.setdefault((frozenset((key(x.team1), key(x.team2))), x.map_name), []).append(
+            {key(x.team1): x.score1_game, key(x.team2): x.score2_game})
+    ok = bad = missing = 0
+    for f, g in r[r.complete].groupby("file"):
+        sc = g.winner.value_counts().to_dict()
+        teams = set(g.ct_team) | set(g.t_team)
+        demo = {key(t): sc.get(t, 0) for t in teams}
+        cands = idx.get((frozenset(demo), g["map"].iat[0]), [])
+        if not cands:
+            missing += 1
+        elif any(c == demo for c in cands):
+            ok += 1
+        else:
+            bad += 1
+            print("score differs:", f, demo, cands)
+    print(f"vs Liquipedia: {ok} match, {bad} differ, {missing} not found")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else ROOT / "data/hltv_saved")
+    if sys.argv[1:] == ["validate"]:
+        validate()
+    else:
+        main(sys.argv[1] if len(sys.argv) > 1 else ROOT / "data/hltv_saved")
