@@ -4,7 +4,7 @@
 One row per round: map, round, ct_team, t_team, winner side/team, end reason, equipment value and money per side
 at freeze-end, running score. One row per player per map: kills, deaths, assists, ADR, KAST-lite (kill/assist/survive).
 """
-import sys
+import re, sys
 from pathlib import Path
 
 import numpy as np
@@ -15,20 +15,67 @@ ROOT = Path(__file__).parent
 OUT = ROOT / "data/demos"
 
 
+_NICK_TEAM = None
+
+
+def name_teams_by_players(p, ticks, label, half_tick=None):
+    """Group the 10 players into two teams by side at the first tick, then name each group by majority vote of its
+    players' latest team in Kaggle; fall back to the two names in the file name ("b8-vs-nuclear-tigeres-m1...")."""
+    global _NICK_TEAM
+    if _NICK_TEAM is None:
+        _NICK_TEAM = {}
+        k = ROOT / "data/kaggle_v5/cs2_all_tiers_games.csv"
+        if k.exists():
+            d = pd.read_csv(k, low_memory=False).sort_values("datetime")
+            for s in (1, 2):
+                for i in range(1, 6):
+                    nick = d[f"team{s}_player{i}"].astype(str).str.split(" (", regex=False).str[0].str.lower()
+                    _NICK_TEAM.update(zip(nick, d[f"team{s}"]))
+    names = p.parse_ticks(["name"], ticks=sorted(ticks.tick.unique())[:: max(1, ticks.tick.nunique() // 10)])
+    nick = dict(zip(names.steamid.astype(str), names.name.str.lower()))
+    # each player's first-half side: side at first appearance, flipped if that was after the halftime switch
+    t = ticks.assign(sid=ticks.steamid.astype(str)).sort_values("tick").drop_duplicates("sid")
+    flip = (t.tick > half_tick) if half_tick else False
+    side = np.where(flip, 5 - t.team_num, t.team_num)  # 2 <-> 3
+    groups = [list(t.sid[side == n]) for n in (3, 2)]
+    stem = re.sub(r"-m\d.*$", "", label.split("/")[-1])
+    fallback = stem.split("-vs-") if "-vs-" in stem else ["team1", "team2"]
+    from oos_eval import key
+    voted = []
+    for g in groups:
+        votes = pd.Series([_NICK_TEAM.get(nick.get(s, "")) for s in g]).dropna()
+        voted.append(votes.mode().iat[0] if len(votes) and votes.value_counts().iat[0] >= 3 else None)
+    if voted[0] and voted[1] and key(voted[0]) == key(voted[1]):
+        voted[1] = None
+    for i in (0, 1):  # unknown group -> the file-name team that the other group isn't
+        if voted[i] is None:
+            other = key(voted[1 - i]) if voted[1 - i] else None
+            voted[i] = next((f for f in fallback if key(f) != other and f not in voted), f"team{i + 1}")
+    return {s: voted[i] for i, g in enumerate(groups) for s in g}
+
+
 def parse(path, label=None):
     label = label or path.name
     p = DemoParser(str(path))
     m = p.parse_header()["map_name"].replace("de_", "").capitalize()
     ends = p.parse_event("round_end")
     ends = ends[ends.winner.isin(["CT", "T"])].sort_values("tick")
-    if "round" in ends:  # a restored round (technical pause) ends twice: keep the last one
-        ends = ends.drop_duplicates("round", keep="last")
+    # Number rounds by the server's own counter: a knife round before the restart, or a round voided by a backup
+    # restore (technical pause), shares its number with the replayed one -> keep the last.
+    trp = p.parse_ticks(["total_rounds_played"], ticks=list(ends.tick - 1)).groupby("tick").total_rounds_played.first()
+    ends["round"] = (ends.tick - 1).map(trp).fillna(ends["round"] - 1).astype(int) + 1
+    ends = ends.drop_duplicates("round", keep="last")
     ends = ends.reset_index(drop=True)
     st = np.sort(p.parse_event("round_freeze_end").tick.values)
     # Economy at freeze-end (after buys); team names at the round-end tick (always present).
     need = sorted(set(st) | set(ends.tick - 1))
     ticks = p.parse_ticks(["team_clan_name", "team_num", "current_equip_value", "balance"], ticks=need)
     ticks = ticks[ticks.team_num.isin([2, 3])]
+    teams_by_id = {}
+    if (ticks.team_clan_name.fillna("") == "").mean() > 0.5:  # some servers (e.g. PGL qualifiers) set no clan tags
+        half = ends.tick.iat[11] if len(ends) > 12 else None
+        teams_by_id = name_teams_by_players(p, ticks, label, half)
+        ticks = ticks.assign(team_clan_name=ticks.steamid.astype(str).map(teams_by_id).fillna(""))
     rows, prev_end = [], 0
     for i, e in ends.iterrows():
         fz = st[(st > prev_end) & (st < e.tick)]  # a freeze-end inside this round; missing if recording began late
@@ -51,12 +98,16 @@ def parse(path, label=None):
         r[f"score_{tm}"] = (r.winner == tm).cumsum()
     final = sorted(r.iloc[-1][[f"score_{tm}" for tm in teams]], reverse=True)
     r["complete"] = final[0] >= 13 and final[0] - final[1] >= 2  # ponytail: regulation/OT win condition
-    return r, players(p, r, label, m)
+    return r, players(p, r, label, m, teams_by_id)
 
 
-def players(p, r, fname, m):
+def players(p, r, fname, m, teams_by_id=None):
     deaths = p.parse_event("player_death", player=["team_clan_name"])
     hurt = p.parse_event("player_hurt", player=["team_clan_name"])
+    if teams_by_id:
+        for df in (deaths, hurt):
+            for who in ("attacker", "user"):
+                df[f"{who}_team_clan_name"] = df[f"{who}_steamid"].astype(str).map(teams_by_id).fillna("")
     live = lambda df: df[df.tick.between(r.start_tick.min(), r.end_tick.max())].copy()
     deaths, hurt = live(deaths), live(hurt)
     # Round restores (technical pauses) kill everyone with weapon "world" on one tick; those aren't real deaths.
@@ -121,6 +172,37 @@ def recover(f, label):
     return out
 
 
+def merge_parts(rs, ps):
+    """Maps recorded in pieces (…-m3-mirage-p1.dem, -p2.dem) -> one map: rounds chained and renumbered,
+    player stats summed (ADR/KAST weighted by rounds)."""
+    base = lambda f: re.sub(r"-p\d+\.dem$", ".dem", f)
+    groups = {}
+    for r, p in zip(rs, ps):
+        groups.setdefault(base(r.file.iat[0]), []).append((r.file.iat[0], r, p))
+    out_r, out_p = [], []
+    for b, parts in groups.items():
+        if len(parts) == 1:
+            out_r.append(parts[0][1]), out_p.append(parts[0][2])
+            continue
+        parts.sort(key=lambda x: x[0])
+        r = pd.concat([x[1].drop(columns=[c for c in x[1] if c.startswith("score_")]) for x in parts],
+                      ignore_index=True)
+        r["file"], r["round"] = b, range(1, len(r) + 1)
+        sc = r.winner.value_counts()
+        hi, lo = (sorted(sc.values, reverse=True) + [0, 0])[:2]
+        r["complete"] = hi >= 13 and hi - lo >= 2
+        out_r.append(r)
+        pl = pd.concat([x[2].assign(n=len(x[1])) for x in parts])
+        pl["adr_x"], pl["kast_x"] = pl.adr * pl.n, pl.kast * pl.n
+        g = pl.groupby(["player", "team"]).agg(map=("map", "first"), kills=("kills", "sum"), deaths=("deaths", "sum"),
+                                                assists=("assists", "sum"), adr_x=("adr_x", "sum"),
+                                                kast_x=("kast_x", "sum"), n=("n", "sum")).reset_index()
+        g["adr"], g["kast"] = (g.adr_x / g.n).round(1), (g.kast_x / g.n).round(1)
+        out_p.append(g.drop(columns=["adr_x", "kast_x", "n"]).assign(file=b))
+        print(f"joined {len(parts)} parts -> {b}: {len(r)} rounds, {dict(sc)}")
+    return out_r, out_p
+
+
 def main(folder):
     """Parses every .dem under `folder` (subfolders = one series each). Results are cached per demo in
     data/demos/parsed/, so adding new demos and rerunning only parses the new ones."""
@@ -151,6 +233,7 @@ def main(folder):
         rs.append(r), ps.append(pl)
     if kept:
         print(f"{len(kept)} cached maps whose .dem is gone kept from {cache}")
+    rs, ps = merge_parts(rs, ps)
     R = pd.concat(rs, ignore_index=True)
     R["series"] = R.file.map(lambda x: x.split("/")[0] if "/" in x else "")
     R.drop(columns=[c for c in R.columns if c.startswith("score_")]).to_csv(OUT / "rounds.csv", index=False)
