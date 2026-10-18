@@ -134,12 +134,14 @@ def evaluate():
 
     # 3) markets: Pinnacle (market_eval.py, 184 series) and Polymarket (market_compare.py, ~509 series), if present
     first = d[te].assign(**{k: v for k, v in preds.items()}).groupby("match_id").head(1).set_index("match_id")
+    # Series label from Kaggle's own series result (team1_win), not from counting maps: Kaggle sometimes lacks map 3.
+    official = d[te].groupby("match_id").team1_win.first().astype(int)
     for label, f, pre in (("Pinnacle closing", "data/odds/model_vs_market.csv", "mkt_"),
                           ("Polymarket closing", "data/polymarket/model_vs_markets.csv", "pm_")):
         if not (O.ROOT / f).exists():
             continue
         mk = pd.read_csv(O.ROOT / f)
-        mk = mk[mk.match_id.isin(first.index)]
+        mk = mk[mk.match_id.isin(first.index)].assign(y_series=lambda x: official[x.match_id].values)
         print(f"\n== vs {label} (series with prices: map 1 {mk[pre + 'map1'].notna().sum()}, "
               f"series {mk[pre + 'series'].notna().sum()}) ==")
         out = []
