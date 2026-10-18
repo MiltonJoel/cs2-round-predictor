@@ -20593,6 +20593,10 @@ team_id,team_name
 298621,INOX Division
 298622,6yuBoJlbl
 298623,Lavked
+298624,INOX Division
+298625,6yuBoJlbl
+298626,Permitta Esports
+298627,Lavked
 298720,Team Buster
 298721,Team Recrent
 298722,Team PCH3LK1N
@@ -21467,6 +21471,8 @@ team_id,team_name
 302953,Luminosity Gaming
 302954,Nemiga Gaming
 302955,Luminosity Gaming
+302956,Nemiga Gaming
+302957,Astralis
 302958,FaZe Clan
 302959,Astralis
 302960,Fnatic
@@ -21477,6 +21483,8 @@ team_id,team_name
 302965,Fnatic
 302966,Astralis
 302967,Fnatic
+302968,Luminosity Gaming
+302969,Astralis
 302970,B8 Esports
 302971,Metizport
 302972,GamerLegion
@@ -21675,13 +21683,13 @@ team_id,team_name
 303441,Chopper Team
 303442,Des0ut Team
 303443,Perfecto Team
-303444,Ct0m Team
+303444,Team Ct0m
 303445,m3wsu Team
 303446,Strogo Team
 303447,Shoke Team
 303448,m3wsu Team
 303449,Strogo Team
-303450,Ct0m Team
+303450,Team Ct0m
 303451,Shoke Team
 303452,Shoke Team
 303453,Strogo Team
@@ -21905,6 +21913,22 @@ team_id,team_name
 304261,9z Team
 304262,G2 Esports
 304263,Natus Vincere
+304264,Inner Circle
+304265,Sangal Esports
+304266,Ninjas in Pyjamas
+304267,Betclic
+304268,Team Liquid
+304269,BBL Esports
+304270,100 Thieves
+304271,JiJieHao
+304272,Astralis
+304273,Sashi Esport
+304274,Fnatic
+304275,HOTU
+304276,MIBR
+304277,BCGame
+304278,Heroic
+304279,Team Envy
 304302,PAQT
 304303,Rune Eaters
 304304,ARCRED
@@ -22089,6 +22113,10 @@ team_id,team_name
 304639,Team SEREGA PIRAT
 304640,Team OverDrive
 304641,Team Jerry
+304642,Team Shoke
+304643,Team OverDrive
+304644,Team SEREGA PIRAT
+304645,Team OverDrive
 304646,Ninjas in Pyjamas
 304647,Johnny Speeds
 304648,FOKUS
@@ -22111,3 +22139,249 @@ team_id,team_name
 304665,Eternal Fire
 304666,Ninjas in Pyjamas
 304667,Eternal Fire
+304724,HOTU
+304725,STATE
+304726,Sashi Esport
+304727,Acend
+304728,K27
+304729,Metizport
+304730,Phantom Esports
+304731,Fnatic
+304732,Apogee Esports
+304733,ex-RUBY
+304734,Color
+304735,Nuclear TigeRES
+304736,Team Nemesis
+304737,Sinners Esports
+304738,BET-M 33
+304739,GamerLegion
+304772,Team Spirit
+304773,PARIVISION
+304774,ShindeN
+304775,Legacy
+304776,9z Team
+304777,TYLOO
+304778,Team Falcons
+304779,Aurora Gaming
+304780,FURIA Esports
+304781,MOUZ
+304782,Team Vitality
+304783,Natus Vincere
+304784,G2 Esports
+304785,1w Team
+304786,BETBOOM TEAM
+304787,M80
+304912,PARIVISION
+304913,FURIA Esports
+304914,ShindeN
+304915,G2 Esports
+304916,9z Team
+304917,Natus Vincere
+304918,Legacy
+304919,1w Team
+304920,Team Spirit
+304921,MOUZ
+304922,M80
+304923,TYLOO
+304924,Team Vitality
+304925,Team Falcons
+304926,Aurora Gaming
+304927,BETBOOM TEAM
+304952,HOTU
+304953,Acend
+304954,K27
+304955,Fnatic
+304956,Sinners Esports
+304957,GamerLegion
+304958,ex-RUBY
+304959,Nuclear TigeRES
+304960,ex-RUBY
+304961,GamerLegion
+304962,HOTU
+304963,Fnatic
+304964,Team Vitality
+304965,PARIVISION
+304966,1w Team
+304967,Aurora Gaming
+304968,Team Falcons
+304969,Team Spirit
+304970,FURIA Esports
+304971,MOUZ
+304972,Team Vitality
+304973,Aurora Gaming
+304974,Team Spirit
+304975,MOUZ
+304976,Team Vitality
+304977,MOUZ
+304978,Aurora Gaming
+304979,Team Spirit
+304980,Team Spirit
+304981,1w Team
+304982,G2 Esports
+304983,PARIVISION
+304984,FURIA Esports
+304985,Aurora Gaming
+304986,9z Team
+304987,BETBOOM TEAM
+304988,Team Falcons
+304989,Natus Vincere
+304990,Legacy
+304991,M80
+305112,Team Spirit
+305113,M80
+305114,FURIA Esports
+305115,9z Team
+305116,PARIVISION
+305117,Natus Vincere
+305151,Betclic
+305152,Sangal Esports
+305153,Inner Circle
+305154,Ninjas in Pyjamas
+305155,Inner Circle
+305156,Sangal Esports
+305157,100 Thieves
+305158,Team Liquid
+305159,JiJieHao
+305160,BBL Esports
+305161,Team Liquid
+305162,JiJieHao
+305165,Fnatic
+305166,Sashi Esport
+305167,HOTU
+305168,Astralis
+305169,Fnatic
+305170,HOTU
+305171,Team Envy
+305172,MIBR
+305173,Heroic
+305174,BCGame
+305175,MIBR
+305176,BCGame
+305217,9z Team
+305218,Aurora Gaming
+305219,Team Falcons
+305220,Ninjas in Pyjamas
+305221,Legacy
+305222,PARIVISION
+305223,FURIA Esports
+305224,BETBOOM TEAM
+305243,FaZe Clan
+305244,Sangal Esports
+305245,PURE
+305246,EA Copenhagen
+305247,FaZe Clan
+305248,PURE
+305249,WhiteBIT Team
+305250,Natus Vincere Junior
+305251,G2 Ares
+305252,Infinite Gaming
+305253,Natus Vincere Junior
+305254,G2 Ares
+305255,FaZe Clan
+305256,Natus Vincere Junior
+305257,Sangal Esports
+305258,EA Copenhagen
+305259,WhiteBIT Team
+305260,Infinite Gaming
+305261,G2 Ares
+305262,Sangal Esports
+305263,PURE
+305264,WhiteBIT Team
+305265,Sangal Esports
+305266,PURE
+305267,FaZe Clan
+305268,Natus Vincere Junior
+305269,Natus Vincere Junior
+305270,Sangal Esports
+305419,Team Ct0m
+305420,Team SCADE
+305421,Team OverDrive
+305422,Team SEREGA PIRAT
+305423,Team Aunkere
+305424,Team StRoGo
+305425,Team Aunkere
+305426,Team SEREGA PIRAT
+305427,Team Ct0m
+305428,Team VladRagovsky
+305429,Team Hooch
+305430,Team SCADE
+305431,Team StRoGo
+305432,Team SEREGA PIRAT
+305433,Team Aunkere
+305434,Team OverDrive
+305435,Team Hooch
+305436,Team Ct0m
+305437,Team SCADE
+305438,Team VladRagovsky
+305439,Team StRoGo
+305440,Team OverDrive
+305441,Team Hooch
+305442,Team VladRagovsky
+305447,Team StRoGo
+305448,Team Ct0m
+305449,Team VladRagovsky
+305450,Team Aunkere
+305451,Team Hooch
+305452,Team Ct0m
+305453,Team SEREGA PIRAT
+305454,Team Aunkere
+305455,Team StRoGo
+305456,Team SEREGA PIRAT
+305457,Team VladRagovsky
+305458,Team Hooch
+305459,Team Ct0m
+305460,Team Aunkere
+305461,Team StRoGo
+305462,Team VladRagovsky
+305463,Team Ct0m
+305464,Team StRoGo
+305465,Team Aunkere
+305466,Team StRoGo
+305607,Team Falcons
+305608,BETBOOM TEAM
+305609,Aurora Gaming
+305610,FURIA Esports
+305619,Ninjas in Pyjamas
+305620,Aurora Gaming
+305623,Team Falcons
+305624,9z Team
+305671,PARIVISION
+305672,BETBOOM TEAM
+305673,Legacy
+305674,FURIA Esports
+305721,Aurora Gaming
+305722,9z Team
+305723,BETBOOM TEAM
+305724,Legacy
+305739,Ninjas in Pyjamas
+305740,Team Liquid
+305741,Fnatic
+305742,Heroic
+305743,Astralis
+305744,MIBR
+305745,Sangal Esports
+305746,100 Thieves
+305747,Ninjas in Pyjamas
+305748,Heroic
+305749,MIBR
+305750,100 Thieves
+305751,Ninjas in Pyjamas
+305752,MIBR
+305753,Heroic
+305754,100 Thieves
+305755,Eternal Fire
+305756,Betclic
+305757,Team Nemesis
+305758,Nuclear TigeRES
+305759,BBL Esports
+305760,EYEBALLERS
+305761,GamerLegion
+305762,ex-RUSTEC
+305763,Betclic
+305764,Team Nemesis
+305765,BBL Esports
+305766,ex-RUSTEC
+305769,Eternal Fire
+305770,Nuclear TigeRES
+305771,EYEBALLERS
+305772,GamerLegion
