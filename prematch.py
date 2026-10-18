@@ -233,7 +233,13 @@ def predict(team_a, team_b, map_name, date):
 
 
 if __name__ == "__main__":
+    pm_flag = "--polymarket" in sys.argv  # also print the Polymarket price for this exact match
+    if pm_flag:
+        sys.argv.remove("--polymarket")
     if sys.argv[1] == "train":
         train()
     else:
         print(predict(*sys.argv[2:6]))
+        if pm_flag:
+            import polymarket
+            polymarket.show(sys.argv[2], sys.argv[3], sys.argv[5])

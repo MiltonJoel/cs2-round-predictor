@@ -208,6 +208,9 @@ def predict_v2(team_a, team_b, map_name, date, tier=1, best_of=3):
 
 
 if __name__ == "__main__":
+    pm_flag = "--polymarket" in sys.argv  # also print the Polymarket price for this exact match
+    if pm_flag:
+        sys.argv.remove("--polymarket")
     if "--update" in sys.argv:
         sys.argv.remove("--update")
         import update
@@ -216,5 +219,8 @@ if __name__ == "__main__":
         v2()
     elif sys.argv[1:2] == ["predict"]:
         print(predict_v2(*sys.argv[2:6]))
+        if pm_flag:
+            import polymarket
+            polymarket.show(sys.argv[2], sys.argv[3], sys.argv[5])
     else:
         main()
