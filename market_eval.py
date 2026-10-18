@@ -60,7 +60,7 @@ def main():
         out["bo"] = bo
         out["model_series"] = series_p(k.p_model, bo)
         out["elo_series"] = series_p(k.elo, bo)
-        out["y_series"] = int(wins[r.match_id] > maps[r.match_id] / 2)
+        out["y_series"] = int(k.score1_match > k.score2_match)  # official series score: Kaggle often omits map 3
         rows.append(out)
     d = pd.DataFrame(rows)
     d.to_csv(ROOT / "data/odds/model_vs_market.csv", index=False)

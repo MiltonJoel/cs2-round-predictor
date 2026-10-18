@@ -42,7 +42,7 @@ def series_table():
                          "model_map1": first.p_model, "elo_map1": first.elo, "y_map1": first.y,
                          "model_series": [E.series_p(p, b) for p, b in zip(first.p_model, bo)],
                          "elo_series": [E.series_p(p, b) for p, b in zip(first.elo, bo)],
-                         "y_series": (wins > maps / 2).astype(int)[first.index]})
+                         "y_series": (first.score1_match > first.score2_match).astype(int)})  # Kaggle often omits map 3
 
 
 def attach_polymarket(t):
