@@ -360,7 +360,7 @@ Test, Kaggle maps 2026-06-29 → 2026-10-17 (n=1,305, 870 tier 1), all refit thr
 | v1 refit to 2026-06, no recency (chosen) | 0.6614 | 0.6638 | 0.621 |
 | strongest recency (180 d Elo, 365 d h2h, 90 d weights) | 0.6630 | 0.6650 | 0.620 |
 
-Against Pinnacle closing on the same 184 series as above: series log loss 0.6036 Pinnacle, 0.6247 v1 refit, 0.6270 strongest recency.
+Against the markets, series log loss: on the 184 Pinnacle series, Pinnacle 0.6036, v1 refit 0.6247, strongest recency 0.6270; on the 509 Polymarket series (`market_compare.py`), Polymarket 0.6194, v1 refit 0.6521, strongest recency 0.6535.
 
 Why it doesn't help: the features already only look at the present.
 Elo moves with every map, so a 2023 result has almost no weight in it by 2026.

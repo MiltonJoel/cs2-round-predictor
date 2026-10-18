@@ -132,24 +132,28 @@ def evaluate():
     print(f"recency minus no-recency log loss: {diff.mean():+.4f} (match bootstrap 95% CI "
           f"[{np.percentile(bs, 2.5):+.4f}, {np.percentile(bs, 97.5):+.4f}]; negative = recency better)")
 
-    # 3) Pinnacle: same 184 series as the README comparison, map 1 and series via market_eval.series_p
-    mk = pd.read_csv(O.ROOT / "data/odds/model_vs_market.csv")
+    # 3) markets: Pinnacle (market_eval.py, 184 series) and Polymarket (market_compare.py, ~509 series), if present
     first = d[te].assign(**{k: v for k, v in preds.items()}).groupby("match_id").head(1).set_index("match_id")
-    mk = mk[mk.match_id.isin(first.index)]
-    print(f"\n== vs Pinnacle closing (series with odds: map 1 {mk.mkt_map1.notna().sum()}, "
-          f"series {mk.mkt_series.notna().sum()}) ==")
-    out = []
-    for name in ["Pinnacle closing"] + list(preds):
-        for lvl in ("map1", "series"):
-            s = mk.dropna(subset=["mkt_" + lvl])
-            if name == "Pinnacle closing":
-                p = s["mkt_" + lvl].values
-            else:
-                p1 = first.loc[s.match_id, name].values
-                p = p1 if lvl == "map1" else np.array([M.series_p(q, int(b)) for q, b in zip(p1, s.bo)])
-            out.append({"model": name, "level": lvl, "n": len(s), "log_loss": M.ll(s["y_" + lvl].values, p).mean(),
-                        "acc": ((p > .5) == s["y_" + lvl].values).mean()})
-    print(pd.DataFrame(out).pivot(index="model", columns="level", values=["log_loss", "acc"]).round(4).to_string())
+    for label, f, pre in (("Pinnacle closing", "data/odds/model_vs_market.csv", "mkt_"),
+                          ("Polymarket closing", "data/polymarket/model_vs_markets.csv", "pm_")):
+        if not (O.ROOT / f).exists():
+            continue
+        mk = pd.read_csv(O.ROOT / f)
+        mk = mk[mk.match_id.isin(first.index)]
+        print(f"\n== vs {label} (series with prices: map 1 {mk[pre + 'map1'].notna().sum()}, "
+              f"series {mk[pre + 'series'].notna().sum()}) ==")
+        out = []
+        for name in [label] + list(preds):
+            for lvl in ("map1", "series"):
+                s = mk.dropna(subset=[pre + lvl])
+                if name == label:
+                    p = s[pre + lvl].values
+                else:
+                    p1 = first.loc[s.match_id, name].values
+                    p = p1 if lvl == "map1" else np.array([M.series_p(q, int(b)) for q, b in zip(p1, s.bo)])
+                out.append({"model": name, "level": lvl, "log_loss": M.ll(s["y_" + lvl].values, p).mean(),
+                            "acc": ((p > .5) == s["y_" + lvl].values).mean()})
+        print(pd.DataFrame(out).pivot(index="model", columns="level", values=["log_loss", "acc"]).round(4).to_string())
     return cfg
 
 
