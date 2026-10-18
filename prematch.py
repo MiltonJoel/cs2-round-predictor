@@ -115,9 +115,9 @@ def lineups(r):
     return get("team1"), get("team2")
 
 
-def build(d, until=None):
+def build(d, until=None, state=None):
     """Replay maps in time order. Features for every map in a match use only state from before that match."""
-    st, rows = State(), []
+    st, rows = state or State(), []
     for _, g in d.groupby(["datetime", "match_id"], sort=True):
         if until is not None and g.datetime.iloc[0] >= until:
             break
