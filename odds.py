@@ -44,14 +44,15 @@ def fixtures(start, end):
     return get("fixtures", sportId=CS2, **{"from": start, "to": end}) or []
 
 
-def history(fixture_id):
-    return get("historical-odds", fixtureId=fixture_id, bookmakers="pinnacle")
+def history(fixture_id, bookmakers="pinnacle"):
+    """Price history; `bookmakers` is up to 3 comma-separated slugs (polymarket alone needs an outcomeId)."""
+    return get("historical-odds", fixtureId=fixture_id, bookmakers=bookmakers)
 
 
-def closing(hist, market, before):
-    """Pinnacle no-vig P(participant1) from the last prices created before `before` (UTC ISO string)."""
+def closing(hist, market, before, book="pinnacle"):
+    """No-vig P(participant1) at `book` from the last prices created before `before` (UTC ISO string)."""
     try:
-        outs = hist["bookmakers"]["pinnacle"]["markets"][market]["outcomes"]
+        outs = hist["bookmakers"][book]["markets"][market]["outcomes"]
     except (TypeError, KeyError):
         return None
     o1, o2 = sorted(outs, key=int)
@@ -70,3 +71,11 @@ if __name__ == "__main__":
     if sys.argv[1] == "fixtures":
         f = fixtures(sys.argv[2], sys.argv[3])
         print(len(f), "fixtures", sum(x.get("statusId") is not None for x in f), "with status")
+    elif sys.argv[1] == "books":  # other bookmakers for the fixtures already matched to Kaggle series
+        import pandas as pd
+        files = [ROOT / "data/odds/matched_fixtures.csv", ROOT / "data/odds/matched_extra_ok.csv"]
+        ids = pd.concat([pd.read_csv(f) for f in files if f.exists()]).drop_duplicates("match_id").fixtureId
+        for i, fid in enumerate(ids):
+            history(fid, sys.argv[2])
+            if i % 25 == 0:
+                print(i, "/", len(ids), flush=True)

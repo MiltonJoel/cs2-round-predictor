@@ -136,6 +136,40 @@ How to read it:
 - **Where the edge comes from:** the model and the market pick the same favourite 80% of the time. Most of the predictable part is shared.
 - **Bookmaker accuracy:** even Pinnacle is right only ~67% on series and ~77–79% on its 70%+ favourites. A claimed 83% across all matches would beat the sharpest market by a wide margin.
 
+## Model vs Polymarket, Kalshi and other bookmakers (Jul–Oct 2026)
+
+`polymarket.py` lists closed CS2 events from Polymarket's public Gamma API (no key) and downloads each outcome's price history from its CLOB API. Everything is cached in `data/polymarket/cache/`. `odds.py books bet365,1xbet,kalshi` fetches three more books for the OddsPapi fixtures already matched to Kaggle; OddsPapi's historical-odds calls didn't count against the free quota (still 15/250 after 193 calls). `market_compare.py` scores the **frozen** v1 against each source, using the same pre-start cutoff as the Pinnacle comparison. Run:
+
+```
+python3 polymarket.py events 2026-06-25 2026-10-04
+python3 odds.py books bet365,1xbet,kalshi
+python3 market_compare.py      # -> data/polymarket/model_vs_markets.csv
+```
+
+Series winner, log loss (lower is better):
+
+| | n | frozen model | Polymarket | model + Polymarket (LOO blend) |
+|---|---|---|---|---|
+| all Polymarket-matched series | 509 | 0.655 | **0.619** | 0.611 |
+| series Pinnacle also prices | 180 | 0.627 | 0.609 (Pinnacle 0.606) | – |
+
+Every market against Pinnacle, on the series both price (positive means Pinnacle is better):
+
+| | series n | series diff | map 1 n | map 1 diff |
+|---|---|---|---|---|
+| frozen model | 184 | +0.024 [−0.011, +0.058] | 184 | −0.005 [−0.032, +0.022] |
+| Polymarket | 180 | +0.003 [−0.007, +0.014] | 157 | +0.005 [−0.006, +0.017] |
+| Kalshi | 176 | +0.003 [−0.019, +0.028] | 154 | +0.016 [−0.005, +0.039] |
+| bet365 | 141 | +0.006 [−0.008, +0.022] | 118 | +0.011 [−0.003, +0.025] |
+| 1xBet | 182 | +0.002 [−0.006, +0.010] | 20 | too few |
+
+How to read it:
+- **All markets agree:** Polymarket, Kalshi, bet365 and 1xBet are within noise of Pinnacle on the series winner. Polymarket and Pinnacle correlate 0.99 and differ by 2 points on average, so any one of them is as good as the others.
+- **Polymarket covers far more matches:** 509 of our series against Pinnacle's 184, down to tier-5 qualifiers. There the gap to the model is clear: +0.035 [+0.010, +0.059]. The model is too unsure about lopsided matches between little-known teams.
+- **Adding market prices to the model doesn't help:** the blend's small gain over raw Polymarket comes from recalibrating Polymarket itself. A Polymarket-only recalibration scores 0.609, and adding the model makes it slightly worse (+0.002 [+0.000, +0.003]). The fitted model weight is 0.06 against 0.89 for Polymarket.
+- **Map 1:** the model is still roughly tied with every market. The markets probably price map 1 before the veto, while the model knows the map.
+- **Only exception, small sample:** on Polymarket's tier-1 events (n=55), the model beats Polymarket (0.593 vs 0.618). That is too few to rely on.
+
 ## Keeping data fresh
 
 ```
