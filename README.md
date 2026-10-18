@@ -170,6 +170,18 @@ How to read it:
 - **Map 1:** the model is still roughly tied with every market. The markets probably price map 1 before the veto, while the model knows the map.
 - **Only exception, small sample:** on Polymarket's tier-1 events (n=55), the model beats Polymarket (0.593 vs 0.618). That is too few to rely on.
 
+### Polymarket price next to a prediction (`--polymarket`)
+
+Add `--polymarket` to any `predict` (prematch.py, oos_eval.py, v3.py, v4.py) to also print Polymarket's price for that exact match. You can also look it up alone:
+
+```
+python3 prematch.py predict fnatic "Team Liquid" Mirage 2026-10-19 --polymarket
+python3 polymarket.py find "Team Vitality" "9z Team" 2026-10-24
+```
+
+- **Matching:** it searches Polymarket's CS2 events starting within 36 h of the date and matches both team names after normalising them. It ignores accents, a "Team" prefix and "Esports/Gaming" suffixes, and it accepts Polymarket's abbreviations (FaZe Clan → FaZe, Ninjas in Pyjamas → NIP). Close variants such as a prefix or a small typo still match, but `exact names` is then false. If the same two teams meet twice in the window, the extra events are listed under `other candidates`.
+- **Prices:** before the start it shows the live midpoint for the series and each "Map N Winner" market. After the start it shows the last price before the start, never an in-play number. A `spread` above 0.2 means almost nobody is trading, and that price says little.
+
 ## Keeping data fresh
 
 ```
