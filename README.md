@@ -340,3 +340,32 @@ python3 v4.py predict "Legacy" "PARIVISION" 2026-10-05 Mirage --players "latto,d
 Test case: Legacy at ESL Pro League S24, where bobz stands in for arT.
 - **Lineups read:** Legacy's five (latto, dumau, n1ssim, try, bobz) and PARIVISION's (HObbit signed, slaxejezzz benched) both come from the tournament page.
 - **On Mirage:** Legacy gets 64.5% with bobz and 60.1% with arT forced by hand. bobz's recent stats rate slightly higher, so the model doesn't penalise the stand-in.
+
+## Recency weighting (`recency.py`, 2026-10-18)
+
+Question: should recent maps count more, since a team in 2026 isn't the team it was in 2023?
+Three ways to do that were tested on the v1 logistic regression, using Kaggle data through 2026-10-17 (12,009 maps):
+- sample weights with a half-life of 90, 180, 365 or 730 days (older training maps count less)
+- Elo that drifts back toward 1500 while a team doesn't play (half-life 180 or 365 days)
+- head-to-head counted only over the last 365 days
+
+All 30 combinations were tuned on validation (2026-01-01 → 2026-06-28, trained on 2024-01-15 → 2025-12-31).
+**None beat no recency.** The best is plain v1 (log loss 0.6591); 730-day weights came second (0.6593), and shorter half-lives were worse (90 days: 0.6610).
+
+Test, Kaggle maps 2026-06-29 → 2026-10-17 (n=1,305, 870 tier 1), all refit through 2026-06-28:
+
+| model | log loss | tier-1 log loss | acc |
+|---|---|---|---|
+| frozen v1 (trained to 2025-06) | 0.6612 | 0.6644 | 0.619 |
+| v1 refit to 2026-06, no recency (chosen) | 0.6614 | 0.6638 | 0.621 |
+| strongest recency (180 d Elo, 365 d h2h, 90 d weights) | 0.6630 | 0.6650 | 0.620 |
+
+Against Pinnacle closing on the same 184 series as above: series log loss 0.6036 Pinnacle, 0.6247 v1 refit, 0.6270 strongest recency.
+
+Why it doesn't help: the features already only look at the present.
+Elo moves with every map, so a 2023 result has almost no weight in it by 2026.
+Form is the last 10 maps, player stats the last 20 maps per player, and roster overlap flags lineup changes (v4 goes further, with Liquipedia transfers).
+The model never compares the 2023 team with the 2026 one; it learns how much an Elo or form gap is worth, and that relationship stays the same over time, so old maps are still useful for learning it.
+
+`python3 recency.py train` refits on every map with the chosen setting (currently none) and saves `models/prematch_v1_recency.pkl` next to v1.
+`python3 recency.py predict "Team A" "Team B" Map YYYY-MM-DD` uses it.
