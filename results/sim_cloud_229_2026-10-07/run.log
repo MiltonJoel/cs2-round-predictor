@@ -1,0 +1,45 @@
+v2 history: 11801 Kaggle + 30601 extra Liquipedia maps
+229 maps (206 with pre-match strength), 102 series, 5-fold by series, 10000 sims per map
+
+all maps (n=229):
+  p_sim  log loss 0.6926  Brier 0.2480  acc 58.5%
+  p_v1   log loss 0.6896  Brier 0.2470  acc 58.1%
+  sim minus v1 log loss: +0.0031, 95% bootstrap CI [-0.0002, +0.0069]; coin flip 0.6931
+
+maps with strength (n=206):
+  p_sim  log loss 0.6928  Brier 0.2479  acc 58.7%
+  p_v1   log loss 0.6891  Brier 0.2467  acc 58.7%
+  sim minus v1 log loss: +0.0037, 95% bootstrap CI [+0.0001, +0.0079]; coin flip 0.6931
+
+reliability (sim):
+             n   pred  actual
+p_sim                        
+(0.0, 0.3]  12  0.235   0.667
+(0.3, 0.4]  28  0.361   0.321
+(0.4, 0.5]  77  0.461   0.416
+(0.5, 0.6]  71  0.540   0.521
+(0.6, 0.7]  32  0.638   0.719
+(0.7, 1.0]   9  0.758   0.667
+
+loser's rounds per map:
+    real_demo_maps  simulated  real_kaggle_2026
+0            0.004      0.007             0.008
+1            0.013      0.022             0.021
+2            0.022      0.032             0.037
+3            0.039      0.045             0.047
+4            0.057      0.061             0.068
+5            0.087      0.077             0.073
+6            0.087      0.089             0.090
+7            0.109      0.101             0.099
+8            0.127      0.110             0.101
+9            0.105      0.114             0.112
+10           0.096      0.116             0.100
+11           0.144      0.115             0.119
+12           0.009      0.016             0.020
+13           0.017      0.029             0.034
+14           0.048      0.034             0.039
+15           0.004      0.005             0.006
+16           0.004      0.008             0.007
+
+mean loser rounds: demo maps 8.21, Kaggle 2026 (3008 maps) 8.03, simulated 8.04
+wrote results/r229
