@@ -117,6 +117,8 @@ python3 oos_eval.py predict "Team Vitality" "Team Spirit" Mirage 2026-10-07
 
 ## Model vs bookmaker (Pinnacle closing odds, Jul–Oct 2026)
 
+> **Label fix (2026-10-18):** series winners now come from Kaggle's official series score. Before, they were counted from the maps listed, and Kaggle often leaves out map 3, so 36 of 661 Bo3s won 2-1 by team1 were scored as team2 wins. The series numbers in this section and the Polymarket section were rerun. Map-1 numbers didn't change. The series columns in the v3/v4 Pinnacle tables below still use the old labels; rerun `v3.py eval` / `v4.py eval` to refresh them. None of the conclusions changed.
+
 `odds.py` fetches CS2 fixtures and Pinnacle price history from OddsPapi. The free plan needs a key in `.oddspapi_key`, which is gitignored, and every response is cached in `data/odds/cache/`. `market_eval.py` compares the **frozen** model (trained through 2026-06-28) with Pinnacle's closing price on the same matches.
 
 - **Closing price:** the last snapshot where both teams are quoted, before the earlier of Kaggle's start time (UTC+3, converted to UTC) and OddsPapi's scheduled start. The bookmaker margin is removed proportionally.
@@ -125,16 +127,16 @@ python3 oos_eval.py predict "Team Vitality" "Team Spirit" Mirage 2026-10-07
 | | Map 1 log loss | Map 1 acc | Series log loss | Series acc |
 |---|---|---|---|---|
 | coin flip | 0.693 | – | 0.693 | – |
-| Elo only | 0.653 | 60.3% | 0.640 | 64.1% |
-| **frozen model** | **0.642** | 63.6% | 0.627 | 65.2% |
-| **Pinnacle closing** | 0.647 | 58.7% | **0.604** | 67.4% |
-| model + market blend (leave-one-out) | 0.652 | 60.9% | 0.607 | 68.5% |
+| Elo only | 0.653 | 60.3% | 0.612 | 66.3% |
+| **frozen model** | **0.642** | 63.6% | 0.602 | 68.5% |
+| **Pinnacle closing** | 0.647 | 58.7% | **0.584** | 69.6% |
+| model + market blend (leave-one-out) | 0.652 | 60.9% | 0.590 | 70.7% |
 
 How to read it:
-- **Series winner, the market's main product:** Pinnacle is better. Model minus market log loss is +0.024, 95% CI [−0.012, +0.060]. Blending the model in doesn't improve on the market.
+- **Series winner, the market's main product:** Pinnacle is better. Model minus market log loss is +0.018, 95% CI [−0.017, +0.053]. Blending the model in doesn't improve on the market.
 - **Map 1:** tied (−0.005, CI [−0.033, +0.022]). Pinnacle's map-1 line is probably mostly set before the veto, while our model already knows which map is being played.
 - **Where the edge comes from:** the model and the market pick the same favourite 80% of the time. Most of the predictable part is shared.
-- **Bookmaker accuracy:** even Pinnacle is right only ~67% on series and ~77–79% on its 70%+ favourites. A claimed 83% across all matches would beat the sharpest market by a wide margin.
+- **Bookmaker accuracy:** even Pinnacle is right only ~70% on series and ~80% on its 70%+ favourites. A claimed 83% across all matches would beat the sharpest market by a wide margin.
 
 ## Model vs Polymarket, Kalshi and other bookmakers (Jul–Oct 2026)
 
@@ -150,25 +152,25 @@ Series winner, log loss (lower is better):
 
 | | n | frozen model | Polymarket | model + Polymarket (LOO blend) |
 |---|---|---|---|---|
-| all Polymarket-matched series | 509 | 0.655 | **0.619** | 0.611 |
-| series Pinnacle also prices | 180 | 0.627 | 0.609 (Pinnacle 0.606) | – |
+| all Polymarket-matched series | 509 | 0.625 | **0.589** | 0.593 |
+| series Pinnacle also prices | 180 | 0.601 | 0.584 (Pinnacle 0.586) | – |
 
 Every market against Pinnacle, on the series both price (positive means Pinnacle is better):
 
 | | series n | series diff | map 1 n | map 1 diff |
 |---|---|---|---|---|
-| frozen model | 184 | +0.024 [−0.011, +0.058] | 184 | −0.005 [−0.032, +0.022] |
-| Polymarket | 180 | +0.003 [−0.007, +0.014] | 157 | +0.005 [−0.006, +0.017] |
-| Kalshi | 176 | +0.003 [−0.019, +0.028] | 154 | +0.016 [−0.005, +0.039] |
-| bet365 | 141 | +0.006 [−0.008, +0.022] | 118 | +0.011 [−0.003, +0.025] |
-| 1xBet | 182 | +0.002 [−0.006, +0.010] | 20 | too few |
+| frozen model | 184 | +0.018 [−0.017, +0.053] | 184 | −0.005 [−0.032, +0.022] |
+| Polymarket | 180 | −0.002 [−0.011, +0.009] | 157 | +0.005 [−0.006, +0.017] |
+| Kalshi | 176 | +0.011 [−0.009, +0.037] | 154 | +0.016 [−0.005, +0.039] |
+| bet365 | 141 | −0.001 [−0.014, +0.016] | 118 | +0.011 [−0.003, +0.025] |
+| 1xBet | 182 | −0.001 [−0.008, +0.007] | 20 | too few |
 
 How to read it:
 - **All markets agree:** Polymarket, Kalshi, bet365 and 1xBet are within noise of Pinnacle on the series winner. Polymarket and Pinnacle correlate 0.99 and differ by 2 points on average, so any one of them is as good as the others.
-- **Polymarket covers far more matches:** 509 of our series against Pinnacle's 184, down to tier-5 qualifiers. There the gap to the model is clear: +0.035 [+0.010, +0.059]. The model is too unsure about lopsided matches between little-known teams.
-- **Adding market prices to the model doesn't help:** the blend's small gain over raw Polymarket comes from recalibrating Polymarket itself. A Polymarket-only recalibration scores 0.609, and adding the model makes it slightly worse (+0.002 [+0.000, +0.003]). The fitted model weight is 0.06 against 0.89 for Polymarket.
+- **Polymarket covers far more matches:** 509 of our series against Pinnacle's 184, down to tier-5 qualifiers. There the gap to the model is clear: +0.036 [+0.011, +0.058], and Polymarket picks the winner in 351 series against the model's 336. The model is too unsure about lopsided matches between little-known teams.
+- **Adding the model to market prices doesn't help:** the leave-one-out blend scores 0.593, slightly worse than Polymarket alone (0.589). The fitted weights are 0.16 for the model and 0.94 for Polymarket.
 - **Map 1:** the model is still roughly tied with every market. The markets probably price map 1 before the veto, while the model knows the map.
-- **Only exception, small sample:** on Polymarket's tier-1 events (n=55), the model beats Polymarket (0.593 vs 0.618). That is too few to rely on.
+- **Only exception, small sample:** on Polymarket's tier-1 events (n=55), the model beats Polymarket (0.586 vs 0.607). That is too few to rely on.
 
 ### Polymarket price next to a prediction (`--polymarket`)
 
