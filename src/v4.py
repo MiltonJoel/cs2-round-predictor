@@ -4,8 +4,8 @@ Lineup policies compared (same features, same splits):
   actual   - the 5 who actually played (from Kaggle; only known once the match starts)
   last     - the team's previous lineup (no transfer info)
   expected - previous lineup updated with every transfer dated before the match day, plus roster-change features
-    python3 v4.py eval [--kaggle-only]
-    python3 v4.py predict "Team Vitality" "Team Spirit" 2026-10-07 [MAP] [--players a,b,c,d,e] [--players-b ...] [--bo 3]
+    python3 src/v4.py eval [--kaggle-only]
+    python3 src/v4.py predict "Team Vitality" "Team Spirit" 2026-10-07 [MAP] [--players a,b,c,d,e] [--players-b ...] [--bo 3]
     (rosters default to the lineup announced on Liquipedia for that tournament, see lineup.py)
 """
 import pickle, sys

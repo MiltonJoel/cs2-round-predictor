@@ -3,7 +3,7 @@
 No network access: it only parses .html files in data/hltv_saved/ and writes data/hltv_saved/maps.csv
 (one row per map, same columns the models use: datetime, event, team1, team2, map_name, score1_game,
 score2_game, bestOf, map_no, team{1,2}_player{1..5}[_kills/_deaths/_adr/_kast], plus veto info when present).
-    python3 hltv_import.py
+    python3 src/hltv_import.py
 """
 import re
 from datetime import datetime, timezone
@@ -12,7 +12,7 @@ from pathlib import Path
 import pandas as pd
 from bs4 import BeautifulSoup
 
-DIR = Path(__file__).parent / "data/hltv_saved"
+DIR = Path(__file__).resolve().parent.parent / "data/hltv_saved"
 MAPS = {"dust2": "Dust2", "de_dust2": "Dust2"}
 
 

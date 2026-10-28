@@ -5,9 +5,9 @@ Three knobs, all chosen on 2026H1 validation and then scored once on the Jun 29+
 - Elo half-life: a team's Elo (overall and per map) drifts back toward 1500 while it doesn't play
 - h2h window: head-to-head only counts meetings from the last N days
 
-    python3 recency.py eval     # tune on validation, score on Jun 29+ (Kaggle + Pinnacle), print tables
-    python3 recency.py train    # refit the chosen setup on every map -> models/prematch_v1_recency.pkl (v1 kept)
-    python3 recency.py predict "Team Vitality" "Team Spirit" Mirage 2026-10-20
+    python3 src/recency.py eval     # tune on validation, score on Jun 29+ (Kaggle + Pinnacle), print tables
+    python3 src/recency.py train    # refit the chosen setup on every map -> models/prematch_v1_recency.pkl (v1 kept)
+    python3 src/recency.py predict "Team Vitality" "Team Spirit" Mirage 2026-10-20
 """
 import itertools, pickle, sys
 from collections import defaultdict

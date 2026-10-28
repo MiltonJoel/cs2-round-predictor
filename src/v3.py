@@ -3,9 +3,9 @@
 Liquipedia's free wikitext has no pick/ban data (0 mapveto fields in 28k matches), so the veto is *inferred*:
 map order (map 1/2 are picks, the last map of a Bo3/Bo5 is the decider) and each team's recent map share.
 
-    python3 v3.py eval [--kaggle-only]  # ablation on Jul-Oct 2026 (Kaggle, Liquipedia) + Pinnacle comparison; trains on < 2026-06-29
-    python3 v3.py train     # fit on all data -> models/prematch_v3.pkl (v1/v2 untouched)
-    python3 v3.py predict "Team Vitality" "Team Spirit" 2026-10-07 [MAP] [--bo 3] [--update]
+    python3 src/v3.py eval [--kaggle-only]  # ablation on Jul-Oct 2026 (Kaggle, Liquipedia) + Pinnacle comparison; trains on < 2026-06-29
+    python3 src/v3.py train     # fit on all data -> models/prematch_v3.pkl (v1/v2 untouched)
+    python3 src/v3.py predict "Team Vitality" "Team Spirit" 2026-10-07 [MAP] [--bo 3] [--update]
 """
 import pickle, sys
 from collections import defaultdict, deque

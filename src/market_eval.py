@@ -1,4 +1,4 @@
-"""Frozen model vs Pinnacle closing odds on Jul-Oct 2026 matches (python3 odds.py ... first; this makes 0 requests).
+"""Frozen model vs Pinnacle closing odds on Jul-Oct 2026 matches (python3 src/odds.py ... first; this makes 0 requests).
 
 Pinnacle closing = last price before the scheduled start, vig removed proportionally.
 Kaggle datetimes are UTC+3 (checked against Pinnacle/OddsPapi start times: median offset 0 h after shifting).

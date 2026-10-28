@@ -1,6 +1,6 @@
 """Parse CS2 demos (.dem) you downloaded into round-level and player-level tables (offline, demoparser2).
 
-    python3 demos.py [folder]    # default data/hltv_saved/ -> data/demos/rounds.csv, data/demos/players.csv
+    python3 src/demos.py [folder]    # default data/hltv_saved/ -> data/demos/rounds.csv, data/demos/players.csv
 One row per round: map, round, ct_team, t_team, winner side/team, end reason, equipment value and money per side
 at freeze-end, running score. One row per player per map: kills, deaths, assists, ADR, KAST-lite (kill/assist/survive).
 """
@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from demoparser2 import DemoParser
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data/demos"
 
 
