@@ -1,7 +1,7 @@
 """Pre-match map-winner model: P(team A wins map M) from strictly prior matches.
 
-    python3 prematch.py train            # build features, fit, calibrate, report, save models/prematch.pkl
-    python3 prematch.py predict "Team Vitality" "Team Spirit" Mirage 2026-07-01
+    python3 src/prematch.py train            # build features, fit, calibrate, report, save models/prematch.pkl
+    python3 src/prematch.py predict "Team Vitality" "Team Spirit" Mirage 2026-07-01
 """
 import math, pickle, sys
 from collections import defaultdict, deque
@@ -15,8 +15,8 @@ from sklearn.metrics import accuracy_score, brier_score_loss, log_loss, roc_auc_
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-RAW = Path(__file__).parent / "data/raw"
-MODEL = Path(__file__).parent / "models/prematch.pkl"
+RAW = Path(__file__).resolve().parent.parent / "data/raw"
+MODEL = Path(__file__).resolve().parent.parent / "models/prematch.pkl"
 VAL_START, TEST_START = "2025-07-01", "2026-01-01"
 BURN_IN_END = "2024-01-15"  # ponytail: per-map rows start 2023-10-25; drop ~3 months from training while Elo settles
 K, K_MAP, FORM_N, PLAYER_N = 32, 32, 10, 20

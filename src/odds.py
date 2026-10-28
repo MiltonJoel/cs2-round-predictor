@@ -1,13 +1,13 @@
 """Pinnacle CS2 odds from OddsPapi (free plan: 250 requests/month, 5 s cooldown on historical-odds).
 
 Key lives in .oddspapi_key (gitignored). Every response is cached in data/odds/cache/, so reruns are free.
-    python3 odds.py fixtures 2026-07-01 2026-10-03   # list CS2 fixtures (1 request per window)
-    python3 odds.py fetch 200                        # historical odds for up to N matched fixtures
+    python3 src/odds.py fixtures 2026-07-01 2026-10-03   # list CS2 fixtures (1 request per window)
+    python3 src/odds.py fetch 200                        # historical odds for up to N matched fixtures
 """
 import gzip, hashlib, json, sys, time, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / "data/odds/cache"
 API = "https://api.oddspapi.io/v4/"
 CS2 = 17

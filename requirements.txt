@@ -1,0 +1,6 @@
+numpy
+pandas
+scikit-learn==1.7.2  # the saved models in models/ were pickled with this version
+kagglehub            # update.py: Kaggle downloads
+beautifulsoup4       # hltv_import.py: pages saved by hand
+demoparser2          # demos.py: .dem parsing

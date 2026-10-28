@@ -8,7 +8,7 @@ from pathlib import Path
 
 API = "https://liquipedia.net/counterstrike/api.php"
 UA = "CounterPredictor/0.1 (research project; https://github.com/MiltonJoel)"
-CACHE = Path(__file__).parent / "data/liquipedia/cache"
+CACHE = Path(__file__).resolve().parent.parent / "data/liquipedia/cache"
 _last = [0.0]
 FRESH = False  # True: ignore cached responses (still rewrites the cache) -- used by update.py for recent months
 
@@ -164,7 +164,7 @@ def collect(months):
 
 
 if __name__ == "__main__":
-    out = Path(__file__).parent / "data/liquipedia/maps_2026.csv"
+    out = Path(__file__).resolve().parent.parent / "data/liquipedia/maps_2026.csv"
     d = collect([f"2026-{m:02d}" for m in range(1, 11)])
     d.to_csv(out, index=False)
     print(len(d), "maps", d.datetime.min(), d.datetime.max(), "->", out)

@@ -1,6 +1,6 @@
 """After you download HLTV demos yourself: pick up the archives, parse them, refresh data.
 
-    python3 import_demos.py [--downloads ~/Downloads] [--no-update]
+    python3 src/import_demos.py [--downloads ~/Downloads] [--no-update]
 
 1. Every .rar/.zip in --downloads whose name has "-vs-" and that contains .dem files is moved to data/hltv_saved/
    and extracted to data/hltv_saved/<archive name>/ (archives are kept; delete them yourself when you want).

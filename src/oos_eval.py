@@ -1,9 +1,9 @@
 """Out-of-sample check of the frozen pre-match model (models/prematch.pkl, trained on Kaggle data through 2026-06-28).
 
-    python3 liquipedia.py   # once: fetch + cache Liquipedia map results (data/liquipedia/maps_2026.csv)
-    python3 oos_eval.py     # walk-forward scoring on (C) Kaggle refresh and (B) Liquipedia, source-bias checks
-    python3 oos_eval.py v2  # then retrain on everything -> models/prematch_v2.pkl (original kept)
-    python3 oos_eval.py predict "Team Vitality" "Team Spirit" Mirage 2026-10-07   # v2 prediction
+    python3 src/liquipedia.py   # once: fetch + cache Liquipedia map results (data/liquipedia/maps_2026.csv)
+    python3 src/oos_eval.py     # walk-forward scoring on (C) Kaggle refresh and (B) Liquipedia, source-bias checks
+    python3 src/oos_eval.py v2  # then retrain on everything -> models/prematch_v2.pkl (original kept)
+    python3 src/oos_eval.py predict "Team Vitality" "Team Spirit" Mirage 2026-10-07   # v2 prediction
     add --update to any command to download new Kaggle/Liquipedia data first (see update.py)
 """
 import pickle, re, sys
@@ -14,7 +14,7 @@ import pandas as pd
 
 import prematch as P
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parent.parent
 CUT = pd.Timestamp("2026-06-29")  # first day the frozen model never saw
 V5 = ROOT / "data/kaggle_v5"
 LP = ROOT / "data/liquipedia/maps_2026.csv"

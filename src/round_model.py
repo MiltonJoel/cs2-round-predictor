@@ -1,7 +1,7 @@
-"""Round model from demos (PLAN.md step 3): P(CT wins round | economy, side, score, round, map).
+"""Round model from demos (docs/plan.md step 3): P(CT wins round | economy, side, score, round, map).
 
-    python3 demos.py          # first: parse demos -> data/demos/rounds.csv
-    python3 round_model.py    # cross-validated by series (no rounds of a held-out series in training)
+    python3 src/demos.py          # first: parse demos -> data/demos/rounds.csv
+    python3 src/round_model.py    # cross-validated by series (no rounds of a held-out series in training)
 Baseline = CT win rate per map from the training folds.
 """
 import numpy as np

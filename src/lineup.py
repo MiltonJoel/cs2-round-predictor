@@ -7,7 +7,7 @@ teams, and read each team's announced players from {{TeamParticipants}} / {{Oppo
   - former: status=former (left during the event)
   - notes:  the free-text notes (e.g. "September 27th - bobz stands in for arT ...")
 Liquipedia lists the stand-in among the players once announced, so `active` is the expected five.
-    python3 lineup.py "Legacy" "PARIVISION" 2026-10-05
+    python3 src/lineup.py "Legacy" "PARIVISION" 2026-10-05
 """
 import re, sys
 

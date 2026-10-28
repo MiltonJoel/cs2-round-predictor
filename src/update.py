@@ -1,4 +1,4 @@
-"""Download new data: python3 update.py  (or add --update to oos_eval.py commands).
+"""Download new data: python3 src/update.py  (or add --update to oos_eval.py commands).
 
 - Kaggle ektarr/counter-strike-pro-matches: re-download via kagglehub; copied to data/kaggle_v5/ only if the version changed
   (every version also stays in ~/.cache/kagglehub/.../versions/N, so old pulls remain reproducible).
@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parent.parent
 KAGGLE = ROOT / "data/kaggle_v5"
 LP = ROOT / "data/liquipedia/maps_2026.csv"
 

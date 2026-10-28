@@ -1,4 +1,4 @@
-"""Monte Carlo map simulator (PLAN.md step 4): round model + CS2 economy rolled forward.
+"""Monte Carlo map simulator (docs/plan.md step 4): round model + CS2 economy rolled forward.
 
 - Round model: logistic P(CT wins round | log equipment ratio, pistol, overtime, map, pre-match strength of the CT
   team), fitted on demo rounds (data/demos/rounds.csv). Strength = logit of the frozen v1 pre-match map probability.
@@ -6,8 +6,8 @@
   (fitted from demos). Next-round resources = linear fit from demos (what was left, kept equipment if won, win/loss
   reward incl. CS2 loss-bonus ladder 1400..3400, kill money). Pistols at rounds 1 and 13 ($800), side switch after 12,
   MR3 overtime with $12,500 and a switch after 3.
-    python3 sim.py eval                                   # held-out series: calibration, scorelines, vs v1
-    python3 sim.py "Team Vitality" "Team Spirit" Mirage 2026-10-07 [--ct A|B] [--n 10000]
+    python3 src/sim.py eval                                   # held-out series: calibration, scorelines, vs v1
+    python3 src/sim.py "Team Vitality" "Team Spirit" Mirage 2026-10-07 [--ct A|B] [--n 10000]
 """
 import argparse, pickle, re, sys
 from pathlib import Path

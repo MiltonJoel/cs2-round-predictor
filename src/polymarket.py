@@ -2,16 +2,16 @@
 
 Gamma API lists the events (one per series: series moneyline, "Map N Winner", totals, handicaps); the CLOB API gives
 each outcome token's price history. Polymarket prices are already probabilities, so there is no margin to remove.
-    python3 polymarket.py events 2026-06-25 2026-10-04   # list closed CS2 events created in the window
-    python3 polymarket.py fetch                          # price history for the series and map-1 markets
-    python3 polymarket.py find "Team A" "Team B" [date]  # the market for that exact match and its probabilities
+    python3 src/polymarket.py events 2026-06-25 2026-10-04   # list closed CS2 events created in the window
+    python3 src/polymarket.py fetch                          # price history for the series and map-1 markets
+    python3 src/polymarket.py find "Team A" "Team B" [date]  # the market for that exact match and its probabilities
 """
 import hashlib, json, sys, time, urllib.parse, urllib.request
 from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data/polymarket"
 CACHE = OUT / "cache"
 GAMMA, CLOB = "https://gamma-api.polymarket.com/", "https://clob.polymarket.com/"
@@ -200,7 +200,7 @@ if __name__ == "__main__":
         OUT.mkdir(parents=True, exist_ok=True)
         d.to_csv(OUT / "events.csv", index=False)
         print(len(d), "series with a moneyline;", d.map1_token.notna().sum(), "with a map-1 market")
-    elif sys.argv[1] == "find":  # python3 polymarket.py find "Team Vitality" "Team Spirit" [2026-10-19T14:00]
+    elif sys.argv[1] == "find":  # python3 src/polymarket.py find "Team Vitality" "Team Spirit" [2026-10-19T14:00]
         show(sys.argv[2], sys.argv[3], sys.argv[4] if len(sys.argv) > 4 else pd.Timestamp.now(tz="UTC"))
     elif sys.argv[1] == "fetch":
         d = load()

@@ -1,7 +1,12 @@
-"""python3 test_prematch.py — leakage + symmetry checks on a small sample."""
+"""python3 tests/test_prematch.py — leakage + symmetry checks on a small sample."""
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-import prematch as P
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+import prematch as P  # noqa: E402
 
 d = P.load().head(2000)
 _, full = P.build(d)

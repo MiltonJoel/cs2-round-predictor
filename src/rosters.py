@@ -3,7 +3,7 @@
 Each row: date, player (lower-case name), from_team, to_team (Liquipedia team names, lower-case),
 active_to (True when the player joins as an active/stand-in player, False for inactive/benched/sub).
 Non-player roles (coach, analyst, manager, ...) are dropped.
-    python3 rosters.py   # fetch (cached) + write data/liquipedia/transfers.csv
+    python3 src/rosters.py   # fetch (cached) + write data/liquipedia/transfers.csv
 """
 import html, re
 from pathlib import Path
@@ -12,7 +12,7 @@ import pandas as pd
 
 import liquipedia as L
 
-OUT = Path(__file__).parent / "data/liquipedia/transfers.csv"
+OUT = Path(__file__).resolve().parent.parent / "data/liquipedia/transfers.csv"
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
           "November", "December"]
 STAFF = re.compile(r"coach|analyst|manager|director|ceo|owner|strateg|psycholog|performance|content|caster", re.I)
