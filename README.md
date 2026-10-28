@@ -76,4 +76,4 @@ Add `--update` to an `oos_eval.py`, `v3.py` or `v4.py` command to download fresh
 
 ## License
 
-The code is released under the [MIT License](LICENSE). The datasets keep their own licenses (the Kaggle dataset is CC BY-SA; Liquipedia content is CC BY-SA), and none of them are redistributed here.
+The code is released under the [MIT License](LICENSE).
