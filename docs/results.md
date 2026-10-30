@@ -362,6 +362,24 @@ Local held-out check (113 demo maps, 5 folds by series, 3,000 sims per map):
 - **Scorelines:** the simulated loser averages 8.12 rounds vs 8.03 on real demo maps and 8.03 across 3,008 Kaggle 2026 maps.
 - **What it adds:** full scoreline and round-by-round odds, not better win probabilities.
 
+### Simulator speed
+
+`sim.py` now runs its hot paths in C (`src/_sim_fast.c`, built with `gcc` on first use and cached in the temp folder):
+- the Monte Carlo round loop, the σ calibration and the strength anchoring, using numpy's own random-number code (linked from numpy's static libraries) so the draws match numpy's
+- the pre-match strength features
+- the round-model and economy regressions use small built-in copies of scikit-learn's `LogisticRegression` (scipy's L-BFGS-B) and `LinearRegression` (`numpy.linalg.lstsq`) instead of importing scikit-learn; `sim.pkl` is still written in the scikit-learn 1.7.2 pickle format
+
+`python3 src/sim.py eval --sims 3000 --folds 5`, single thread:
+
+| Where | Before | After, first run (includes gcc) | After, later runs |
+|---|---|---|---|
+| Cloud check, Oct 30 2026 (numpy 1.26.4, scipy 1.17.1, pandas 2.3.3) | 215.5 s CPU, 325 MB | 7.8 s, 137 MB | 4.5 s (48x), 105 MB (−68%) |
+| Coding-eval run `fifth-try` on the PC (Docker, same versions) | 869 s CPU, 321 MB | 8.0 s (108x), 134 MB | 5.4 s (160x), 103 MB (−68%) |
+
+A single-match simulation (`sim.py "Team Vitality" "Team Spirit" Mirage 2026-10-07 --sims 10000`) went from 101 s to 6 s with identical output.
+
+Exactness: `summary.txt`, `calibration.csv` and `scorelines.csv` came out byte-identical in every check. In the eval run on the PC, all six outputs, including `per_map.csv` and both copies of `sim.pkl`, were byte-identical for the default run and for a variant run with other settings. In the cloud check, `per_map.csv` and `sim.pkl` differed in the last bit of a few numbers (at most 1e-15, on 16 of 336 maps), and the original patch does the same there. The rewritten regressions reproduce scikit-learn's arithmetic exactly only with the same libraries and CPU. The pickle writer and the regression code assume scikit-learn 1.7.2 and scipy ≥ 1.15. The BLAS calls are looked up by name, so numpy 1.x and 2.x both work.
+
 Cloud run: the `cloud-data` branch holds everything under `data/` that the evaluation reads. That's the demo tables, the Kaggle CSVs, Liquipedia maps and transfers, and the frozen v1 model; no .dem files and no API caches.
 
 ## Announced lineups (`lineup.py`)
