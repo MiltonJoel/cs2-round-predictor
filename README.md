@@ -42,6 +42,8 @@ models/         trained models, not tracked by git
 pip install -r requirements.txt
 ```
 
+The simulator (`src/sim.py`) builds a small C helper (`src/_sim_fast.c`) with `gcc` the first time it runs and caches it in the system temp folder, so it needs `gcc` and an x86-64 CPU with AVX2. A full `sim.py eval` takes about 5 s instead of several minutes; see [docs/results.md](docs/results.md#simulator-speed).
+
 Data goes under `data/`, which git ignores:
 - Kaggle [`ektarr/counter-strike-pro-matches`](https://www.kaggle.com/datasets/ektarr/counter-strike-pro-matches) in `data/raw/` (v1) and `data/kaggle_v5/` (newer models). `python3 src/update.py` downloads it and refreshes Liquipedia results.
 - Liquipedia results, cached in `data/liquipedia/` by `src/liquipedia.py` through the official MediaWiki API.
@@ -55,6 +57,7 @@ python3 src/prematch.py predict "Team Vitality" "Team Spirit" Mirage 2026-10-07
 python3 src/prematch.py predict "Team Vitality" "Team Spirit" Mirage 2026-10-07 --polymarket   # also show the market price
 python3 src/v4.py predict "Team Vitality" "Team Spirit" 2026-10-07 Mirage      # v4: expected rosters from transfers
 python3 src/sim.py "Team Vitality" "Team Spirit" Mirage 2026-10-07 --ct A      # scorelines, pistols, per-round odds
+python3 src/sim.py eval --sims 3000 --folds 5 --out results/                   # held-out simulator check (~5 s)
 python3 src/import_demos.py --downloads ~/Downloads                            # import newly downloaded demos
 python3 tests/test_prematch.py                                                 # leakage + symmetry checks
 ```
