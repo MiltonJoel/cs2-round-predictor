@@ -31,7 +31,7 @@ models/         trained models, not tracked by git
 
 | Area | Scripts |
 |---|---|
-| Pre-match models | `prematch.py` (v1), `oos_eval.py` (v2, out-of-sample checks), `v3.py`, `v4.py`, `recency.py` |
+| Pre-match models | `prematch.py` (v1), `oos_eval.py` (v2, out-of-sample checks), `v3.py`, `v4.py`, `recency.py`, `hentosh.py` |
 | Data sources | `update.py`, `liquipedia.py`, `rosters.py`, `lineup.py`, `hltv_import.py` |
 | Demos and simulation | `demos.py`, `import_demos.py`, `round_model.py`, `sim.py` |
 | Markets | `odds.py`, `polymarket.py`, `market_eval.py`, `market_compare.py` |
@@ -77,3 +77,4 @@ Add `--update` to an `oos_eval.py`, `v3.py` or `v4.py` command to download fresh
 ## License
 
 The code is released under the [MIT License](LICENSE).
+`src/hentosh.py` adapts ideas from [Hentoshp/CS2_Win_Prediction](https://github.com/Hentoshp/CS2_Win_Prediction) (MIT License, Copyright (c) 2025 Pierce Hentosh).
