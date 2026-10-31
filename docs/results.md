@@ -417,3 +417,33 @@ The model never compares the 2023 team with the 2026 one; it learns how much an 
 
 `python3 src/recency.py train` refits on every map with the chosen setting (currently none) and saves `models/prematch_v1_recency.pkl` next to v1.
 `python3 src/recency.py predict "Team A" "Team B" Map YYYY-MM-DD` uses it.
+
+## Hentosh-style player features (`hentosh.py`, 2026-10-31)
+
+Adapted from [Hentoshp/CS2_Win_Prediction](https://github.com/Hentoshp/CS2_Win_Prediction) (MIT License, Copyright (c) 2025 Pierce Hentosh).
+That project reports 77% accuracy, but it predicts FACEIT NA matchmaking games, not pro matches, and its features leak: each player's last 100 games are fetched when the data is collected, with no date cutoff, so the predicted game is inside its own features. It is also scored with random cross-validation, not a time holdout.
+
+The fix: for each player, win% and K/R (kills per round, from Kaggle kills and the map's round count) over their last 100 maps **before the series**, on this map and overall. The per-map numbers are shrunk toward the player's overall numbers (10 maps for win%, 100 rounds for K/R), averaged over the lineup, and added to v1 as team A minus team B diffs (`h_mapwin`, `h_kr`).
+Models are trained on Kaggle v5 maps 2024-01-15 → 2026-06-28 and tested on 2026-06-29 → 2026-10-17 (n=1,305; the README's 0.658 is the same model on the first 1,097 of these).
+
+| model | log loss [95% CI] | AUC | acc |
+|---|---|---|---|
+| Elo only | 0.682 | 0.614 | 58.3% |
+| v1 frozen | **0.661** [0.644, 0.678] | 0.648 | 61.9% |
+| v1 refit to 2026-06 | 0.661 | 0.646 | 62.1% |
+| Hentosh features only (logreg) | 0.682 | 0.583 | 53.7% |
+| v1 + Hentosh, logreg | 0.662 | 0.645 | 61.8% |
+| v1 + Hentosh, RBF SVM + Platt (their model family) | 0.667 | 0.638 | 61.5% |
+
+Series winner vs Polymarket closing (n=509, `market_compare.py` matching): Polymarket 0.589, v1 0.625, v1 + Hentosh logreg 0.624 (−0.001 vs v1, CI [−0.006, +0.004]), SVM 0.649.
+
+Leaky variant, the player window includes the series being predicted (Hentosh's setup):
+
+| | log loss | acc |
+|---|---|---|
+| leaky, time holdout | 0.466 | **77.4%** |
+| leaky, random 5-fold CV | 0.417 | 80.9% |
+| pre-match, random 5-fold CV | 0.666 | 59.4% |
+
+Verdict: the leak alone takes the same kind of model from ~62% to ~77%, which is the accuracy that project reports. Without the leak, the features add nothing to v1 (Elo, form and player K/D/ADR/KAST already carry this signal; the new coefficients are small, 0.04–0.05), and the SVM is worse than logistic regression.
+`python3 src/hentosh.py train` saves the logreg version as `models/prematch_hentosh.pkl` (originals untouched); v1 stays the recommended model.
